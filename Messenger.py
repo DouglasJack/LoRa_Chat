@@ -1,6 +1,8 @@
 from os.path import exists
 
 import Comm
+import Message
+
 
 def MessageToCodes(msg):
     match msg:
@@ -13,7 +15,7 @@ def MessageToCodes(msg):
         case "+ERR=10":
             return "TX is over times?"
         case "+ERR=12":
-            return  "CRC Error"
+            return "CRC Error"
         case "+ERR=13":
             return "TX data exceeds 240Bytes"
         case "+ERR=14":
@@ -30,19 +32,20 @@ def MessageToCodes(msg):
             return "Time setting value of smart receiving power is not allowed"
     return False
 
+
 class Messenger:
-    def __init__(self,sport):
-        self.comm = Comm.Comm(sport,self)
+    def __init__(self, sport):
+        self.comm = Comm.Comm(sport, self)
         self.messageCache = []
         self.lastMessageSent = None
-        self.clearToSend = False # IF ENABLED, No messages can be sent
-        self.clearToSendIssueTime = None # This is the time of the last clearToSend issued, we cannot send if its been within 5s of CTS issued.
+        self.clearToSend = False  # IF ENABLED, No messages can be sent
+        self.clearToSendIssueTime = None  # This is the time of the last clearToSend issued, we cannot send if its been within 5s of CTS issued.
 
-    def RecievedMessage(self,msg):
+    def RecievedMessage(self, msg):
         # Converts message serial string into Messenger object.
         mCode = MessageToCodes(msg)
         if mCode:
-            print("{RYLR998}: "+mCode+"\n")
+            print("{RYLR998}: " + mCode + "\n")
 
             # Message packet. Call function on the message class which determines how to handle a message
             # Think of the message packet as containing all details about how to send and return.
@@ -52,5 +55,9 @@ class Messenger:
             # Should be a recieved message.
             print(msg)
 
-    def ChatMessage(self,msg):
-        self.comm.send(msg)
+    def ChatMessage(self, msg):
+        MsgPacket = Message.Message()
+        MsgPacket.newMessage(msg)
+
+
+        self.comm.send(MsgPacket.data)

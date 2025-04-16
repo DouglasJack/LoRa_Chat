@@ -54,10 +54,12 @@ class Messenger:
         else:
             # Should be a recieved message.
             print(msg)
+            MsgPacket = Message.Message()
+            MsgPacket.recievedMessage(msg)
 
     def ChatMessage(self, msg):
         MsgPacket = Message.Message()
         MsgPacket.newMessage(msg)
 
-
+        # Creates a message packet, then sends it. The message will generate the correct data for sending the command.
         self.comm.send(MsgPacket.data)

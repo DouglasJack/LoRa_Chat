@@ -43,4 +43,4 @@ class Comm:
     # All messages MUST be sent as a broadcast.
     def send(self, message):
         ascii = message.encode("ascii", "ignore").decode("ascii")
-        self.serial.write(str("AT+SEND=0," + str(len(ascii)) + "," + ascii + "\r\n").encode())
+        self.serial.write(str(ascii + "\r\n").encode())

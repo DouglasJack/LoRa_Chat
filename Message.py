@@ -8,6 +8,7 @@ def ascii_to_binary(text: str) -> str:
 
 
 def binary_to_ascii(binary: str) -> str:
+    # TODO, Ensure that anything sent here does not become the 0x1F character.
     return ''.join(chr(int(b, 2)) for b in binary.split())
 
 
@@ -79,6 +80,9 @@ class Message:
             self.seqNum = chunks[4]
             self.DBM = chunks[5]
             self.SNR = chunks[6]
+
+            if self.fromAddr == 0:
+                self.broadCast = True
 
             print(f"[MessagePKT] RCV: {self.msg}")
 

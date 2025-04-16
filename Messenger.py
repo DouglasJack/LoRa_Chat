@@ -53,7 +53,6 @@ class Messenger:
                 self.lastMessageSent.handleError(mCode)
         else:
             # Should be a recieved message.
-            print(msg)
             MsgPacket = Message.Message()
             MsgPacket.recievedMessage(msg)
 

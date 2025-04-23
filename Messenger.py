@@ -2,7 +2,7 @@ from os.path import exists
 
 import Comm
 import Message
-
+import time
 
 def MessageToCodes(msg):
     match msg:
@@ -57,8 +57,13 @@ class Messenger:
             MsgPacket.recievedMessage(msg)
 
     def ChatMessage(self, msg):
+        if self.clearToSend and self.clearToSendIssueTime:
+            if time.time() - self.clearToSendIssueTime < 5:
+                print("[Messenger]: CTS active. Message not sent.")
+                return
         MsgPacket = Message.Message()
         MsgPacket.newMessage(msg)
 
         # Creates a message packet, then sends it. The message will generate the correct data for sending the command.
+        self.lastMessageSent = MsgPacket #Last message sent
         self.comm.send(MsgPacket.data)

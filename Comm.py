@@ -18,14 +18,14 @@ class Comm:
         self.messenger = messenger
 
         try:
-            self.serial = serial.Serial(self.serialPort, 112500)
+            self.serial = serial.Serial(self.serialPort, 115200)
             # self.serial.write(str("AT+MODE=2,3000,9000\r\n").encode())  # CLASS C
             self.serial.write(str("AT+NETWORKID=" + str(self.networkid) + "\r\n").encode())
 
             self.thread = threading.Thread(target=self._listener, daemon=True)  # Daemon allows background threading.
             self.thread.start()
 
-        except serial.serialException as e:
+        except serial.SerialException as e:
             print(f"Error{e}")
 
     def __str__(self):

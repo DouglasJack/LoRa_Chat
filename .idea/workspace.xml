@@ -6,9 +6,12 @@
   <component name="ChangeListManager">
     <list default="true" id="1f12c6e5-97dc-4ea2-a1e2-a1954ed68015" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+<<<<<<< Updated upstream
       <change beforePath="$PROJECT_DIR$/Comm.py" beforeDir="false" afterPath="$PROJECT_DIR$/Comm.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Message.py" beforeDir="false" afterPath="$PROJECT_DIR$/Message.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/encryption_key.py" beforeDir="false" afterPath="$PROJECT_DIR$/encryption_key.py" afterDir="false" />
+=======
+>>>>>>> Stashed changes
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

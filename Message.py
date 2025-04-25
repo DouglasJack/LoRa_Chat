@@ -1,7 +1,5 @@
-import os
 import random
 import re
-import base64
 import time
 from encryption_key import cipher
 
@@ -15,17 +13,12 @@ def binary_to_ascii(binary: str) -> str:
     return ''.join(chr(int(b, 2)) for b in binary.split())
 
 
+PACKET_SEPARATOR = binary_to_ascii("00001111")
+
+
 def messageToCommand(messageClass):
-    packet_fields = [
-        messageClass.toAddr,
-        messageClass.dataLength,
-        messageClass.flag + PACKET_SEPARATOR +
-        str(messageClass.fromAddr) + PACKET_SEPARATOR +
-        messageClass.seqNum + PACKET_SEPARATOR +
-        messageClass.msg + PACKET_SEPARATOR +
-        str(messageClass.messageTime)
-    ]
-    return f"AT+SEND={','.join(map(str, packet_fields))}"
+    return f"AT+SEND={messageClass.toAddr},{messageClass.dataLength},{messageClass.flag}{chr(0x1F)}{messageClass.msg}{chr(0x1F)}{messageClass.seqNum}{chr(0x1F)}{messageClass.messageTime}"
+
 
 class Message:
     def __init__(self):
@@ -53,9 +46,10 @@ class Message:
         messageData = messageData.replace(PACKET_SEPARATOR, '')  # remove separator if present
         self.flag = binary_to_ascii("00010000")
         self.toAddr = messageAddress
-        self.fromAddr = 3 # CHANGE TO DEVICE ADDRESS
+        self.fromAddr = 3  # CHANGE TO DEVICE ADDRESS
 
-        self.seqNum = binary_to_ascii("0" + format(random.getrandbits(7), '07b'))  # Generates a random sequence number where 0 is the beginning number.
+        self.seqNum = binary_to_ascii("0" + format(random.getrandbits(7),
+                                                   '07b'))  # Generates a random sequence number where 0 is the beginning number.
 
         self.messageTime = int(time.time())
         self.msg = messageData
@@ -72,69 +66,60 @@ class Message:
             self.msg = messageData
             self.encryption = False
 
-        self.dataLength = len(self.msg) + 4
+        self.dataLength = len(self.msg) + 5 + 10
         self.data = messageToCommand(self)
 
         print(f"[MessagePKT] {self.data}")
         return self
 
-    # When a message is received, all the steps to decryption and flags are finished.
     def recievedMessage(self, message):
-        try:
-            if "=" not in message:
-                return self
+        # Split by our ascii US character.
+        pattern = (  # ChatGPT generated Regex :)
+                r"\+RCV=(\d+),"  # Address
+                r"(\d+),"  # Length
+                r"(.)" +  # Flag (any single ASCII character)
+                re.escape(chr(0x1F)) +  # Splitter
+                r"(.*?)" +  # Message (non-greedy)
+                re.escape(chr(0x1F)) +  # Splitter
+                r"(.)" +
+                re.escape(chr(0x1F)) +  # Splitter
+                r"(-?\d+)" +  # Time
+                "," +  # SequenceNumber (any single ASCII character)
+                r"(-?\d+)," +  # Signal Strength
+                r"(-?\d+)"  # SNR
+        )
 
-            # RYLR998 header
-            header, payload = message.split("=", 1)
-            if not header.startswith("+RCV"):
-                return self
+        # This is kinda insecure. A vulnerability will be present here. because we don't strip symbols from the
+        # message coming in.
+        match = re.match(pattern, message)
+        if match and len(match.groups()) == 8:
+            chunks = match.groups()  # ('5', '6', '\x10', '<Cool message>', '!', '-13', '11')
 
-            # Split into body + signal values
-            last_comma = payload.rfind(",")
-            second_last_comma = payload.rfind(",", 0, last_comma)
-            if last_comma == -1 or second_last_comma == -1:
-                raise ValueError("Could not locate DBM and SNR")
+            self.fromAddr = chunks[0]
+            self.dataLength = chunks[1]
+            self.flag = chunks[2]
+            self.msg = chunks[3]
+            self.seqNum = chunks[4]
+            self.timeCode = chunks[5]
+            self.DBM = chunks[6]
+            self.SNR = chunks[7]
 
-            self.DBM = payload[second_last_comma + 1:last_comma]
-            self.SNR = payload[last_comma + 1:]
-
-            main_part = payload[:second_last_comma]
-
-            # Find and split (safe from commas in encrypted msg)
-            first_comma = main_part.find(",")
-            second_comma = main_part.find(",", first_comma + 1)
-            third_comma = main_part.find(",", second_comma + 1)
-
-            self.toAddr = main_part[:first_comma]
-            self.dataLength = main_part[first_comma + 1:second_comma]
-            self.flag = main_part[second_comma + 1]  # First character only
-
-            packet_payload = main_part[third_comma + 1:]  # After 3rd comma, start of encoded message
-
-            payload_fields = packet_payload.split(PACKET_SEPARATOR)
-            if len(payload_fields) < 5:
-                raise ValueError("Missing payload fields")
-
-            self.fromAddr = payload_fields[1]
-            self.seqNum = payload_fields[2]
-            self.msg = payload_fields[3]
-            self.messageTime = int(payload_fields[4])
-            if self.fromAddr == '0':
+            if self.fromAddr == 0:
                 self.broadCast = True
 
-            # Decrypt message
             try:
                 decrypted = cipher.decrypt(self.msg.encode())
                 self.msg = decrypted.decode()
                 self.encryption = True
-                print(f"[Decryption] Decrypted message: {self.msg}")
+
             except Exception as e:
-                print(f"[Decryption] Error decrypting message: {e}")
+                print(f"[Decryption] Failed to decrypt {e}")
                 self.encryption = False
 
             print(f"[MessagePKT] RCV: {self.msg}")
-            return self
 
-        except Exception as e:
-            print(f"[MessagePKT] ERROR: Could not parse message - {e}")
             return self
+        else:
+            print("[MessagePKT] ERROR READING INCOMING MESSAGE - Could not split message chunks")
+
+        return self

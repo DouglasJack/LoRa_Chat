@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LoRa Encrypted Chat</title>
+    <!-- Link to external CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>LoRa Encrypted Chat</h2>
+
+        <!-- Show connection status -->
+        <div class="status">
+            {% if comm_port %}
+                Connected to: {{ comm_port }}
+            {% else %}
+                No serial port connected. Please enter a port.
+            {% endif %}
+        </div>
+
+        <!-- Form to select serial port -->
+        <form method="POST" class="port-box">
+            <label for="comm_port">Select Serial Port:</label><br>
+            <select name="comm_port" required>
+                {% for port in ports %}
+                    <option value="{{ port }}" {% if port == comm_port %}selected{% endif %}>{{ port }}</option>
+                {% endfor %}
+            </select><br>
+            <button type="submit">Set Serial Port</button>
+        </form>
+
+        <!-- Display received messages -->
+        <div class="chat-box">
+            {% for msg in messages %}
+                <p>{{ msg }}</p>
+            {% endfor %}
+        </div>
+
+        <!-- Form to send message -->
+        <div class="input-box">
+            <form method="POST">
+                <textarea name="message" placeholder="Type your message..." required></textarea><br>
+                <button type="submit">Send Message</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer text -->
+    <footer>Secure LoRa Communication at NMSU by Cellular Networks students 2025</footer>
+
+    <!-- Auto-scroll script -->
+    <script>
+        var chatBox = document.querySelector('.chat-box');
+        chatBox.scrollTop = chatBox.scrollHeight;
+    </script>
+</body>
+</html>

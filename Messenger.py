@@ -59,13 +59,18 @@ class Messenger:
         else:
             # Should be a recieved message.
             MsgPacket = Message.Message()
+            
             MsgPacket = MsgPacket.recievedMessage(msg)
             if MsgPacket.ascii_to_binary(MsgPacket.flag)[3] == 1:
                 # Address bit is raised, handle accordingly.
                 self.tr.received(MsgPacket)
+                
+            MsgPacket.recievedMessage(msg)
+            # For WebUI, only cache if it's from another device
+            if MsgPacket.encryption:
+                self.messageCache.append(MsgPacket)
 
-
-    def CustomMessage(self, Message):
+   def CustomMessage(self, Message):
         # Must pass Message class
         self.lastMessageSent = Message
         self.comm.send(Message.data)

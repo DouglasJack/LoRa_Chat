@@ -43,6 +43,7 @@ class Messenger:
         self.lastMessageSent = None
         self.clearToSend = False  # IF ENABLED, No messages can be sent
         self.clearToSendIssueTime = None
+        time.sleep(1) # This is required.
         self.tr = Protocols.Training.Training(self)
         self.tr.searching()
 
@@ -70,7 +71,7 @@ class Messenger:
             if MsgPacket.encryption:
                 self.messageCache.append(MsgPacket)
 
-   def CustomMessage(self, Message):
+    def CustomMessage(self, Message):
         # Must pass Message class
         self.lastMessageSent = Message
         self.comm.send(Message.data)

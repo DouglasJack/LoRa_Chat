@@ -20,7 +20,7 @@ class Training:
         RequestPacket.toAddr = 0
         RequestPacket.seqNum = RequestPacket.binary_to_ascii("0" + format(random.getrandbits(7), '07b'))
         RequestPacket.messageTime = int(time.time())
-        RequestPacket.msg = ""
+        RequestPacket.msg = "moawdawdawd"
         RequestPacket.dataLength = len(RequestPacket.msg) + 5 + 10
         RequestPacket.data = messageToCommand(RequestPacket)
 
@@ -28,8 +28,9 @@ class Training:
         self.messenger.clearToSend = True
         self.messenger.clearToSendIssueTime = time.time() + 30  # CTS 30s window for replies on address initialization.
 
-    def recieved(self,pkt):
+    def recieved(self, pkt):
         # Determine what the response is. If our CTS window is up, and our last packet contained the flag
         # Requesting the addresses and the sequence number is correct, then this is a response
         # Otherwise, this is a cry for help.
+        
         return

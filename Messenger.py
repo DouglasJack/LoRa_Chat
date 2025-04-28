@@ -55,6 +55,9 @@ class Messenger:
             # Should be a recieved message.
             MsgPacket = Message.Message()
             MsgPacket.recievedMessage(msg)
+            # For WebUI, only cache if it's from another device
+            if MsgPacket.encryption:
+                self.messageCache.append(MsgPacket)
 
     def ChatMessage(self, msg):
         if self.clearToSend and self.clearToSendIssueTime:

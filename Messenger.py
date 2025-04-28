@@ -47,11 +47,7 @@ class Messenger:
         self.lastMessageSent = None
         self.clearToSend = False  # IF ENABLED, No messages can be sent
         self.clearToSendIssueTime = None
-<<<<<<< Updated upstream
-=======
         time.sleep(1)  # This is required. (Used to setup thread in COMM)
-
->>>>>>> Stashed changes
         self.tr = Protocols.Training.Training(self)
         self.trainingThread = threading.Thread(target=self.tr.searching, daemon=True)
         self.trainingThread.start()
@@ -81,12 +77,8 @@ class Messenger:
             if MsgPacket.encryption:
                 self.messageCache.append(MsgPacket)
 
-<<<<<<< Updated upstream
-   def CustomMessage(self, Message):
-=======
     # When using CustomMessage, its expected you handle the packet creation yourself.
     def CustomMessage(self, Message, ignoreCTS=False):
->>>>>>> Stashed changes
         # Must pass Message class
         if ignoreCTS or not self.clearToSend:
             self.lastMessageSent = Message

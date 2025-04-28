@@ -33,7 +33,7 @@ class Training:
         RequestPacket.toAddr = 0
         RequestPacket.seqNum = RequestPacket.binary_to_ascii("0" + format(random.getrandbits(7), '07b'))
         RequestPacket.messageTime = int(time.time())
-        RequestPacket.msg = ""
+        RequestPacket.msg = "moawdawdawd"
         RequestPacket.dataLength = len(RequestPacket.msg) + 5 + 10
         RequestPacket.data = messageToCommand(RequestPacket)
 
@@ -45,12 +45,11 @@ class Training:
         time.sleep(30)  # We wait till CTS is open.
         # NOW, We assign our own address.
 
-<<<<<<< Updated upstream
+
     def recieved(self,pkt):
         # Determine what the response is. If our CTS window is up, and our last packet contained the flag
         # Requesting the addresses and the sequence number is correct, then this is a response
         # Otherwise, this is a cry for help.
-=======
         # From this list of addresses we now have. Choose an address
         # from 1-10000 that is not in that range.
         nums = set(range(1, 10000)) - set(self.addressMessages)
@@ -146,5 +145,5 @@ class Training:
                 pt = threading.Thread(target=self.threadedReply, args=(pkt, offset))
                 pt.start()  # This is threaded because of the offset.
                 # If 3 isn't toggled up, 3 = CTS
->>>>>>> Stashed changes
+
         return

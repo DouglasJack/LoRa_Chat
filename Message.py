@@ -16,7 +16,7 @@ def messageToCommand(messageClass):
 
 
 class Message:
-    def ascii_to_binary(text: str) -> str:
+    def ascii_to_binary(self, text: str) -> str:
         return ' '.join(format(ord(char), '08b') for char in text)
     def binary_to_ascii(self, binary: str) -> str:
         # TODO, Ensure that anything sent here does not become the 0x1F character.
@@ -94,7 +94,6 @@ class Message:
         match = re.match(pattern, message)
         if match and len(match.groups()) == 8:
             chunks = match.groups()  # ('5', '6', '\x10', '<Cool message>', '!', '-13', '11')
-
             self.fromAddr = chunks[0]
             self.dataLength = chunks[1]
             self.flag = chunks[2]
@@ -121,5 +120,6 @@ class Message:
             return self
         else:
             print("[MessagePKT] ERROR READING INCOMING MESSAGE - Could not split message chunks")
+            print(message)
 
         return self

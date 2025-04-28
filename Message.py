@@ -4,16 +4,11 @@ import time
 from encryption_key import cipher
 
 
-def ascii_to_binary(text: str) -> str:
-    return ' '.join(format(ord(char), '08b') for char in text)
 
 
-def binary_to_ascii(binary: str) -> str:
-    # TODO, Ensure that anything sent here does not become the 0x1F character.
-    return ''.join(chr(int(b, 2)) for b in binary.split())
 
 
-PACKET_SEPARATOR = binary_to_ascii("00001111")
+PACKET_SEPARATOR = chr(0x1F)
 
 
 def messageToCommand(messageClass):
@@ -21,6 +16,12 @@ def messageToCommand(messageClass):
 
 
 class Message:
+    def ascii_to_binary(text: str) -> str:
+        return ' '.join(format(ord(char), '08b') for char in text)
+    def binary_to_ascii(self, binary: str) -> str:
+        # TODO, Ensure that anything sent here does not become the 0x1F character.
+        return ''.join(chr(int(b, 2)) for b in binary.split())
+
     def __init__(self):
         self.flag = None  # This is the ascii character flag
         self.msg = None  # Message data (or actual message itself)
@@ -44,16 +45,15 @@ class Message:
         messageData = re.sub(r'[^a-zA-Z0-9\s]', '', messageData)  # Replace symbols with nothing
         # A message to be sent will always attach a CTS. Any message sent must wait a time for a response.
         messageData = messageData.replace(PACKET_SEPARATOR, '')  # remove separator if present
-        self.flag = binary_to_ascii("00010000")
+        self.flag = self.binary_to_ascii("00010000")
         self.toAddr = messageAddress
         self.fromAddr = 3  # CHANGE TO DEVICE ADDRESS
 
-        self.seqNum = binary_to_ascii("0" + format(random.getrandbits(7),
+        self.seqNum = self.binary_to_ascii("0" + format(random.getrandbits(7),
                                                    '07b'))  # Generates a random sequence number where 0 is the beginning number.
 
         self.messageTime = int(time.time())
         self.msg = messageData
-        self.dataLength = len(self.msg) + 4
         self.data = messageToCommand(self)
 
         # Encrypt the message

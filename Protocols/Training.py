@@ -33,7 +33,7 @@ class Training:
         RequestPacket.toAddr = 0
         RequestPacket.seqNum = RequestPacket.binary_to_ascii("0" + format(random.getrandbits(7), '07b'))
         RequestPacket.messageTime = int(time.time())
-        RequestPacket.msg = "moawdawdawd"
+        RequestPacket.msg = ""
         RequestPacket.dataLength = len(RequestPacket.msg) + 5 + 10
         RequestPacket.data = messageToCommand(RequestPacket)
 
@@ -44,14 +44,8 @@ class Training:
         self.messenger.clearToSendIssueTime = time.time() + 30  # CTS 30s window for replies on address initialization.
         time.sleep(30)  # We wait till CTS is open.
         # NOW, We assign our own address.
+        # Clear CTS requirements.
 
-
-    def recieved(self,pkt):
-        # Determine what the response is. If our CTS window is up, and our last packet contained the flag
-        # Requesting the addresses and the sequence number is correct, then this is a response
-        # Otherwise, this is a cry for help.
-        # From this list of addresses we now have. Choose an address
-        # from 1-10000 that is not in that range.
         nums = set(range(1, 10000)) - set(self.addressMessages)
         if nums:
             rand = random.choice(list(nums))
@@ -60,10 +54,10 @@ class Training:
         else:
             print("[Trainer] ALL ADDRESS HAVE BEEN CONSUMED!!!")
 
-        # Clear CTS requirements.
         self.messenger.clearToSend = False
         self.messenger.clearToSendIssueTime = time.time()
         print("[Trainer] Completed training...")
+
 
     # Does the 16 bit conversions.
     def int_to_two_ascii(self, integer):

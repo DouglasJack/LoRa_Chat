@@ -1,3 +1,6 @@
+import math
+import random
+
 import serial
 import threading
 
@@ -10,7 +13,7 @@ import Messenger
 
 
 class Comm:
-    def __init__(self, port,messenger):
+    def __init__(self, port, messenger):
         self.networkid = 3  # Network ID MUST be the same for all devices. We use 3
         self.serialPort = port
         self.stopThread = False
@@ -21,6 +24,10 @@ class Comm:
             self.serial = serial.Serial(self.serialPort, 115200)
             # self.serial.write(str("AT+MODE=2,3000,9000\r\n").encode())  # CLASS C
             self.serial.write(str("AT+NETWORKID=" + str(self.networkid) + "\r\n").encode())
+
+            newAddr = (math.ceil(random.random() * 535)) + 65000
+            self.messenger.myAddress = newAddr
+            self.serial.write(str("AT+ADDRESS=" + str(newAddr) + "\r\n").encode())
 
             self.thread = threading.Thread(target=self._listener, daemon=True)  # Daemon allows background threading.
             self.thread.start()
@@ -41,6 +48,8 @@ class Comm:
                 print(f"Exception {E}")
 
     # All messages MUST be sent as a broadcast.
-    def send(self, message):
-        ascii = message.encode("ascii", "ignore").decode("ascii")
-        self.serial.write(str(ascii + "\r\n").encode())
+    def send(self, message, skipDecode=False):
+        if not skipDecode:
+            message = message.encode("ascii", "ignore").decode("ascii")
+        print("[COMM] SENDING: " + message)
+        self.serial.write(str(message + "\r\n").encode())

@@ -55,4 +55,4 @@ if __name__ == '__main__':
     listener_thread = threading.Thread(target=background_listener, daemon=True)
     listener_thread.start()
 
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5300)

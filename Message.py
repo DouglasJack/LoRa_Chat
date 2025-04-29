@@ -99,7 +99,8 @@ class Message:
             self.flag = chunks[2]
             self.msg = chunks[3]
             self.seqNum = chunks[4]
-            self.timeCode = chunks[5]
+            #self.timeCode = chunks[5]
+            self.messageTime = int(chunks[5])   # Epoch seconds extracted from the packet
             self.DBM = chunks[6]
             self.SNR = chunks[7]
 

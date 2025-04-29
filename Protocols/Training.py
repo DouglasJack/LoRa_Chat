@@ -6,6 +6,7 @@ import Message
 import random
 import time
 
+from flask_socketio import emit
 
 def messageToCommand(messageClass):
     return f"AT+SEND={messageClass.toAddr},{messageClass.dataLength},{messageClass.flag}{chr(0x1F)}{messageClass.msg}{chr(0x1F)}{messageClass.seqNum}{chr(0x1F)}{messageClass.messageTime}"
@@ -19,6 +20,7 @@ def binary_to_ascii(binary: str) -> str:
 class Training:
     def __init__(self, messenger):
         self.messenger = messenger
+        self.training_in_progress = False
         self.searchingSeqNum = 0
         # TODO: Move addressMessages to class for memorizing hosts.
         self.addressMessages = []  # This should NEVER be cleared during device operation.
@@ -26,6 +28,7 @@ class Training:
         self.addressMessages.append(1225)  # TODO: REMOVE
 
     def searching(self):
+        self.training_in_progress = True
         print("LoRa Chat: Establishing an address. 30s...")
         # To begin, we will issue a message asking for others addresses.
         RequestPacket = Message.Message()
@@ -56,9 +59,9 @@ class Training:
 
         self.messenger.clearToSend = False
         self.messenger.clearToSendIssueTime = time.time()
+        self.training_in_progress = False
         print("[Trainer] Completed training...")
-
-
+        self.messenger.socketio.emit('system_message', {'message': '✅ Training completed!'})
     # Does the 16 bit conversions.
     def int_to_two_ascii(self, integer):
 

@@ -40,7 +40,8 @@ def MessageToCodes(msg):
 
 
 class Messenger:
-    def __init__(self, sport):
+    def __init__(self, sport, socketio=None):
+        self.socketio = socketio
         self.myAddress = 0
         self.comm = Comm.Comm(sport, self)
         self.messageCache = []

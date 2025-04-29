@@ -33,14 +33,46 @@ h2 {
     background: #f9f9f9;
     border-radius: 8px;
     margin-bottom: 20px;
+    scroll-behavior: smooth;
+
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
-/* Single message style */
+/* Base chat message style */
 .chat-box p {
-    margin: 0 0 10px;
-    padding: 8px;
-    background: #e6e6e6;
-    border-radius: 5px;
+    margin: 0;
+    padding: 10px 14px;
+    border-radius: 12px;
+    word-wrap: break-word;
+    color: white;
+    animation: fadeIn 0.3s ease;
+    white-space: pre-wrap;
+    max-width: 85%;
+    display: block;
+}
+
+/* Sent messages (You) */
+.chat-box p.you {
+    background: #7a21fd;
+    margin-left: auto;
+    text-align: right;
+}
+
+/* Received messages (Others) */
+.chat-box p.other {
+    background: #535353;
+    margin-right: auto;
+    text-align: left;
+}
+
+.chat-box p.system {
+    background: transparent;
+    color: #888;
+    text-align: center;
+    font-style: italic;
+    font-size: 14px;
 }
 
 /* Forms and inputs */
@@ -67,7 +99,7 @@ button {
     border: none;
     padding: 12px 24px;
     font-size: 16px;
-    border-radius: 6px;
+    border-radius: 10px;
     cursor: pointer;
     transition: background 0.3s ease;
 }
@@ -90,4 +122,10 @@ footer {
     color: #666;
     margin-bottom: 20px;
     text-align: center;
+}
+
+/* Fade-in animation for messages */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }

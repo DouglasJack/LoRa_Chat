@@ -13,10 +13,11 @@
         <!-- Show connection status -->
         <div class="status">
             {% if comm_port %}
-                Connected to: {{ comm_port }}
+                ✅ Connected to: {{ comm_port }}
             {% else %}
-                No serial port connected. Please enter a port.
+                ⚠️ No serial port connected.
             {% endif %}
+
         </div>
 
         <!-- Form to select serial port -->
@@ -39,20 +40,78 @@
 
         <!-- Form to send message -->
         <div class="input-box">
-            <form method="POST">
-                <textarea name="message" placeholder="Type your message..." required></textarea><br>
-                <button type="submit">Send Message</button>
-            </form>
+            <textarea id="messageInput" placeholder="Type your message..." required></textarea><br>
+            <button onclick="sendMessage()">Send Message</button>
         </div>
     </div>
 
     <!-- Footer text -->
     <footer>Secure LoRa Communication at NMSU by Cellular Networks students 2025</footer>
 
-    <!-- Auto-scroll script -->
+    <!-- Auto-scroll, WebSocket, Connection Status and Enter to send -->
+    <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
     <script>
-        var chatBox = document.querySelector('.chat-box');
-        chatBox.scrollTop = chatBox.scrollHeight;
+        var socket = io();
+
+        // Connection Status Messages
+        socket.on('connect', function() {
+            console.log("Connected to WebSocket server");
+        });
+
+        socket.on('disconnect', function() {
+            console.log("Disconnected from WebSocket server");
+            alert("Lost connection to server. Please refresh the page.");
+        });
+
+        // Handle receiving a new message
+        socket.on('new_message', function(data) {
+            const chatBox = document.querySelector('.chat-box');
+            const p = document.createElement('p');
+            p.textContent = data.message;
+
+            // Differentiate "You" messages
+            if (data.message.includes("You:")) {
+                p.classList.add('you');
+            } else {
+                p.classList.add('other');
+            }
+
+            chatBox.appendChild(p);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+
+        socket.on('system_message', function(data) {
+            const chatBox = document.querySelector('.chat-box');
+            const p = document.createElement('p');
+            p.textContent = data.message;
+            p.classList.add('system');
+            chatBox.appendChild(p);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+
+
+        // Function to send message
+        function sendMessage() {
+            var input = document.getElementById('messageInput');
+            var message = input.value.trim();
+            if (message !== "") {
+                socket.emit('send_message', {message: message});
+                input.value = ""; // Clear input after sending
+            }
+        }
+
+        // Press Enter to Send, Shift+Enter for New Line
+        document.getElementById('messageInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();  // Prevent newline
+                sendMessage();
+            }
+        });
+
+        // Autofocus text input when page loads
+        window.onload = function() {
+            document.getElementById('messageInput').focus();
+        };
     </script>
 </body>
 </html>

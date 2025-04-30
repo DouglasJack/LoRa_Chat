@@ -3,24 +3,42 @@ import re
 import time
 from encryption_key import cipher
 
-
-
-
-
-
 PACKET_SEPARATOR = chr(0x1F)
 
 
-def messageToCommand(messageClass):
-    return f"AT+SEND={messageClass.toAddr},{messageClass.dataLength},{messageClass.flag}{chr(0x1F)}{messageClass.msg}{chr(0x1F)}{messageClass.seqNum}{chr(0x1F)}{messageClass.messageTime}"
-
-
 class Message:
+    def messageToCommand(self, messageClass):
+        return f"AT+SEND={messageClass.toAddr},{len(f"{messageClass.flag}{chr(0x1F)}{messageClass.msg}{chr(0x1F)}{messageClass.seqNum}{chr(0x1F)}{messageClass.messageTime}")},{messageClass.flag}{chr(0x1F)}{messageClass.msg}{chr(0x1F)}{messageClass.seqNum}{chr(0x1F)}{messageClass.messageTime}"
+
     def ascii_to_binary(self, text: str) -> str:
+        for char in text:
+            if not 0 <= ord(char) <= 127:
+                raise ValueError("Input string contains non-ASCII characters.")
         return ' '.join(format(ord(char), '08b') for char in text)
+
     def binary_to_ascii(self, binary: str) -> str:
-        # TODO, Ensure that anything sent here does not become the 0x1F character.
-        return ''.join(chr(int(b, 2)) for b in binary.split())
+        binary = binary.replace(" ", "")  # Remove spaces if any
+        if not 1 <= len(binary) <= 16 or not all(bit in '01' for bit in binary):
+            raise ValueError("Binary string must be 1 to 16 bits long and contain only '0' and '1'.")
+
+        # Pad with leading zeros if the binary string is less than 16 bits
+        binary = binary.zfill(16)
+
+        # Take the first 8 bits and the last 8 bits
+        binary_chunk1 = binary[:8]
+        binary_chunk2 = binary[8:]
+
+        # Convert each 8-bit chunk to an integer (0-255 range)
+        int_chunk1 = int(binary_chunk1, 2)
+        int_chunk2 = int(binary_chunk2, 2)
+
+        # Convert each integer chunk to its corresponding ASCII character
+        # Note: This will produce characters with ord() values from 0-255,
+        # which includes extended ASCII and control characters.
+        ascii_char1 = chr(int_chunk1)
+        ascii_char2 = chr(int_chunk2)
+
+        return ascii_char1+ascii_char2
 
     def __init__(self):
         self.flag = None  # This is the ascii character flag
@@ -50,11 +68,11 @@ class Message:
         self.fromAddr = 3  # CHANGE TO DEVICE ADDRESS
 
         self.seqNum = self.binary_to_ascii("0" + format(random.getrandbits(7),
-                                                   '07b'))  # Generates a random sequence number where 0 is the beginning number.
+                                                        '07b'))  # Generates a random sequence number where 0 is the beginning number.
 
         self.messageTime = int(time.time())
         self.msg = messageData
-        self.data = messageToCommand(self)
+        self.data = self.messageToCommand(self)
 
         # Encrypt the message
         try:
@@ -67,21 +85,24 @@ class Message:
             self.encryption = False
 
         self.dataLength = len(self.msg) + 5 + 10
-        self.data = messageToCommand(self)
+        self.data = self.messageToCommand(self)
 
         print(f"[MessagePKT] {self.data}")
         return self
+
+    def handleError(self, mCode, messenger):
+        return
 
     def recievedMessage(self, message):
         # Split by our ascii US character.
         pattern = (  # ChatGPT generated Regex :)
                 r"\+RCV=(\d+),"  # Address
                 r"(\d+),"  # Length
-                r"(.)" +  # Flag (any single ASCII character)
+                r"(..)" +  # Flag (any single ASCII character)
                 re.escape(chr(0x1F)) +  # Splitter
                 r"(.*?)" +  # Message (non-greedy)
                 re.escape(chr(0x1F)) +  # Splitter
-                r"(.)" +
+                r"(..)" +
                 re.escape(chr(0x1F)) +  # Splitter
                 r"(-?\d+)" +  # Time
                 "," +  # SequenceNumber (any single ASCII character)
@@ -92,6 +113,7 @@ class Message:
         # This is kinda insecure. A vulnerability will be present here. because we don't strip symbols from the
         # message coming in.
         match = re.match(pattern, message)
+        print(match)
         if match and len(match.groups()) == 8:
             chunks = match.groups()  # ('5', '6', '\x10', '<Cool message>', '!', '-13', '11')
             self.fromAddr = chunks[0]
@@ -99,7 +121,12 @@ class Message:
             self.flag = chunks[2]
             self.msg = chunks[3]
             self.seqNum = chunks[4]
+<<<<<<< Updated upstream
             self.timeCode = chunks[5]
+=======
+            #self.timeCode = chunks[5]
+            self.messageTime = int(chunks[5])  # Epoch seconds extracted from the packet
+>>>>>>> Stashed changes
             self.DBM = chunks[6]
             self.SNR = chunks[7]
 

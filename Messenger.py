@@ -6,6 +6,7 @@ import Message
 import time
 
 import Protocols.Training
+from Protocols import DirectMessage
 
 
 def MessageToCodes(msg):
@@ -52,6 +53,21 @@ class Messenger:
         self.trainingThread = threading.Thread(target=self.tr.searching, daemon=True)
         self.trainingThread.start()
 
+    def ackMessage(self, msg):
+        print("[Messenger response]")
+        print(msg.ascii_to_binary(msg.flag))
+        if msg.ascii_to_binary(msg.flag)[3] == "1":
+            time.sleep(.5)
+            print("[Messenger] Acking message...")
+            replyPacket = Message.Message()
+            replyPacket.msg = "1"
+            replyPacket.toAddr = msg.fromAddr
+            replyPacket.seqNum = msg.seqNum
+            replyPacket.flag = msg.binary_to_ascii("10000000")
+            replyPacket.messageTime = int(time.time())
+            replyPacket.data = Message.messageToCommand(replyPacket)
+            self.comm.send(replyPacket.data,True)
+
     def RecievedMessage(self, msg):
         # Converts message serial string into Messenger object.
         mCode = MessageToCodes(msg)
@@ -61,7 +77,7 @@ class Messenger:
             # Message packet. Call function on the message class which determines how to handle a message
             # Think of the message packet as containing all details about how to send and return.
             if mCode != "OKAY!" and self.lastMessageSent:
-                self.lastMessageSent.handleError(mCode)
+                self.lastMessageSent.handleError(mCode, self)
         else:
             # Should be a recieved message.
             MsgPacket = Message.Message()
@@ -73,6 +89,14 @@ class Messenger:
                 return
 
             MsgPacket.recievedMessage(msg)
+
+            try:
+                self.lastMessageSent.reply(MsgPacket)
+            except AttributeError:
+                print()
+
+            self.ackMessage(MsgPacket)
+
             # For WebUI, only cache if it's from another device
             if MsgPacket.encryption:
                 self.messageCache.append(MsgPacket)
@@ -82,16 +106,20 @@ class Messenger:
         # Must pass Message class
         if ignoreCTS or not self.clearToSend:
             self.lastMessageSent = Message
-            self.comm.send(Message.data, True)
+            self.comm.send(Message.data, False)
 
     def ChatMessage(self, msg):
         if self.clearToSend and self.clearToSendIssueTime:
             if time.time() < self.clearToSendIssueTime:
                 print("[Messenger]: CTS active. Message not sent.")
                 return
-        MsgPacket = Message.Message()
-        MsgPacket.newMessage(msg)
+        #MsgPacket = Message.Message()
+        #MsgPacket.newMessage(msg)
+        DM = DirectMessage.DirectMessage(msg)
+        DM.send(self)
 
         # Creates a message packet, then sends it. The message will generate the correct data for sending the command.
-        self.lastMessageSent = MsgPacket  #Last message sent
-        self.comm.send(MsgPacket.data)
+        # self.clearToSend = True
+        # self.clearToSendIssueTime = time.time() + 30
+        # self.lastMessageSent = DM  #Last message sent
+        # self.comm.send(DM.pkt) # The message packet itself

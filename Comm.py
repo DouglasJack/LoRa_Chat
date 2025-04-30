@@ -25,7 +25,7 @@ class Comm:
             # self.serial.write(str("AT+MODE=2,3000,9000\r\n").encode())  # CLASS C
             self.serial.write(str("AT+NETWORKID=" + str(self.networkid) + "\r\n").encode())
 
-            newAddr = (math.ceil(random.random() * 535)) + 65000
+            newAddr = (math.ceil(random.random() * 383)) + 16000
             self.messenger.myAddress = newAddr
             self.serial.write(str("AT+ADDRESS=" + str(newAddr) + "\r\n").encode())
 
@@ -49,7 +49,13 @@ class Comm:
 
     # All messages MUST be sent as a broadcast.
     def send(self, message, skipDecode=False):
-        if not skipDecode:
-            message = message.encode("ascii", "ignore").decode("ascii")
-        print("[COMM] SENDING: " + message)
-        self.serial.write(str(message + "\r\n").encode())
+        # print("[COMM] SENDING: " + str(message + "\r\n"))
+        message = message + "\r\n"
+        if skipDecode:
+            message = message.encode("ascii","ignore").decode("ascii")
+        else:
+            message = message.encode("ascii")
+
+        print(message)
+        self.serial.write(message)
+        # self.serial.write((message + "\r\n").encode("ascii"))

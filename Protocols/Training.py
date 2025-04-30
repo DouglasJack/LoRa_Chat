@@ -7,14 +7,6 @@ import random
 import time
 
 
-def messageToCommand(messageClass):
-    return f"AT+SEND={messageClass.toAddr},{messageClass.dataLength},{messageClass.flag}{chr(0x1F)}{messageClass.msg}{chr(0x1F)}{messageClass.seqNum}{chr(0x1F)}{messageClass.messageTime}"
-
-
-def binary_to_ascii(binary: str) -> str:
-    # TODO, Ensure that anything sent here does not become the 0x1F character.
-    return ''.join(chr(int(b, 2)) for b in binary.split())
-
 
 class Training:
     def __init__(self, messenger):
@@ -33,9 +25,14 @@ class Training:
         RequestPacket.toAddr = 0
         RequestPacket.seqNum = RequestPacket.binary_to_ascii("0" + format(random.getrandbits(7), '07b'))
         RequestPacket.messageTime = int(time.time())
+<<<<<<< Updated upstream
         RequestPacket.msg = "moawdawdawd"
         RequestPacket.dataLength = len(RequestPacket.msg) + 5 + 10
         RequestPacket.data = messageToCommand(RequestPacket)
+=======
+        RequestPacket.msg = ""
+        RequestPacket.data = RequestPacket.messageToCommand(RequestPacket)
+>>>>>>> Stashed changes
 
         self.searchingSeqNum = RequestPacket.seqNum
 
@@ -64,24 +61,22 @@ class Training:
         self.messenger.clearToSend = False
         self.messenger.clearToSendIssueTime = time.time()
         print("[Trainer] Completed training...")
+<<<<<<< Updated upstream
+=======
+        self.messenger.socketio.emit('system_message', {'message': '✅ Training completed!'})
+>>>>>>> Stashed changes
 
     # Does the 16 bit conversions.
     def int_to_two_ascii(self, integer):
+        if not 1 <= integer <= 16383:
+            raise ValueError(
+                "Input integer must be between 1 and 16383 to be represented by two standard ASCII characters in this scheme.")
 
-        # Convert integer to 16-bit binary string (zfill ensures leading zeros)
-        binary_string = bin(integer)[2:].zfill(16)
+        val1 = integer // 128
+        val2 = integer % 128
 
-        # Split the 16-bit binary string into two 8-bit chunks
-        binary_chunk1 = binary_string[:8]
-        binary_chunk2 = binary_string[8:]
-
-        # Convert each 8-bit binary chunk to an integer
-        int_chunk1 = int(binary_chunk1, 2)
-        int_chunk2 = int(binary_chunk2, 2)
-
-        # Convert each integer chunk to its corresponding ASCII character
-        ascii_char1 = chr(int_chunk1)
-        ascii_char2 = chr(int_chunk2)
+        ascii_char1 = chr(val1)
+        ascii_char2 = chr(val2)
 
         return ascii_char1, ascii_char2
 
@@ -92,6 +87,7 @@ class Training:
         # Generates a host list
         addressesString = ""
         for id in self.addressMessages:
+            print("Encoding "+str(id))
             char1, char2 = self.int_to_two_ascii(id)
             addressesString = f"{addressesString}{char1}{char2}"
 
@@ -102,8 +98,7 @@ class Training:
         RequestPacket.seqNum = pkt.seqNum
         RequestPacket.messageTime = int(time.time())
         RequestPacket.msg = addressesString
-        RequestPacket.dataLength = len(RequestPacket.msg) + 5 + 11
-        RequestPacket.data = messageToCommand(RequestPacket)
+        RequestPacket.data = RequestPacket.messageToCommand(RequestPacket)
         print("[Trainer] ADDRESSES: " + RequestPacket.msg)
         self.messenger.CustomMessage(RequestPacket, True)  # True can be used to force reply.
 

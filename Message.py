@@ -11,34 +11,35 @@ class Message:
         return f"AT+SEND={messageClass.toAddr},{len(f"{messageClass.flag}{chr(0x1F)}{messageClass.msg}{chr(0x1F)}{messageClass.seqNum}{chr(0x1F)}{messageClass.messageTime}")},{messageClass.flag}{chr(0x1F)}{messageClass.msg}{chr(0x1F)}{messageClass.seqNum}{chr(0x1F)}{messageClass.messageTime}"
 
     def ascii_to_binary(self, text: str) -> str:
+        if len(text) != 2:
+            raise ValueError("Only 2-character ASCII strings are supported.")
         for char in text:
             if not 0 <= ord(char) <= 127:
-                raise ValueError("Input string contains non-ASCII characters.")
-        return ' '.join(format(ord(char), '08b') for char in text)
+                raise ValueError("Characters must be 7-bit ASCII (0-127).")
+
+        # Convert each character to 7-bit binary
+        bin1 = format(ord(text[0]), '07b')
+        bin2 = format(ord(text[1]), '07b')
+
+        # Add '00' padding to make it 16 bits total
+        return '00' + bin1 + bin2
 
     def binary_to_ascii(self, binary: str) -> str:
-        binary = binary.replace(" ", "")  # Remove spaces if any
-        if not 1 <= len(binary) <= 16 or not all(bit in '01' for bit in binary):
-            raise ValueError("Binary string must be 1 to 16 bits long and contain only '0' and '1'.")
+        binary = binary.replace(" ", "")
+        if len(binary) != 16 or not all(bit in '01' for bit in binary):
+            raise ValueError("Binary string must be exactly 16 bits and contain only '0' or '1'. "+str(len(binary)))
 
-        # Pad with leading zeros if the binary string is less than 16 bits
-        binary = binary.zfill(16)
+        if not binary.startswith("00"):
+            raise ValueError("Binary string must start with '00' as prefix.")
 
-        # Take the first 8 bits and the last 8 bits
-        binary_chunk1 = binary[:8]
-        binary_chunk2 = binary[8:]
+        # Extract the two 7-bit chunks
+        bin1 = binary[2:9]
+        bin2 = binary[9:]
 
-        # Convert each 8-bit chunk to an integer (0-255 range)
-        int_chunk1 = int(binary_chunk1, 2)
-        int_chunk2 = int(binary_chunk2, 2)
+        char1 = chr(int(bin1, 2))
+        char2 = chr(int(bin2, 2))
 
-        # Convert each integer chunk to its corresponding ASCII character
-        # Note: This will produce characters with ord() values from 0-255,
-        # which includes extended ASCII and control characters.
-        ascii_char1 = chr(int_chunk1)
-        ascii_char2 = chr(int_chunk2)
-
-        return ascii_char1+ascii_char2
+        return char1 + char2
 
     def __init__(self):
         self.flag = None  # This is the ascii character flag
@@ -63,12 +64,11 @@ class Message:
         messageData = re.sub(r'[^a-zA-Z0-9\s]', '', messageData)  # Replace symbols with nothing
         # A message to be sent will always attach a CTS. Any message sent must wait a time for a response.
         messageData = messageData.replace(PACKET_SEPARATOR, '')  # remove separator if present
-        self.flag = self.binary_to_ascii("00010000")
+        self.flag = self.binary_to_ascii("0000000000010000")
         self.toAddr = messageAddress
         self.fromAddr = 3  # CHANGE TO DEVICE ADDRESS
 
-        self.seqNum = self.binary_to_ascii("0" + format(random.getrandbits(7),
-                                                        '07b'))  # Generates a random sequence number where 0 is the beginning number.
+        self.seqNum = self.binary_to_ascii("00" + format(random.getrandbits(14), '014b'))  # Generates a random sequence number where 0 is the beginning number.
 
         self.messageTime = int(time.time())
         self.msg = messageData
@@ -95,40 +95,78 @@ class Message:
 
     def recievedMessage(self, message):
         # Split by our ascii US character.
-        pattern = (  # ChatGPT generated Regex :)
-                r"\+RCV=(\d+),"  # Address
-                r"(\d+),"  # Length
-                r"(..)" +  # Flag (any single ASCII character)
-                re.escape(chr(0x1F)) +  # Splitter
-                r"(.*?)" +  # Message (non-greedy)
-                re.escape(chr(0x1F)) +  # Splitter
-                r"(..)" +
-                re.escape(chr(0x1F)) +  # Splitter
-                r"(-?\d+)" +  # Time
-                "," +  # SequenceNumber (any single ASCII character)
-                r"(-?\d+)," +  # Signal Strength
-                r"(-?\d+)"  # SNR
-        )
+        # pattern = (
+        #         r"\+RCV=,"  # Literal header (empty addr)
+        #         r"(\d+),"  # Length
+        #         r"(\d+),"  # Field
+        #         r"(.{2})" + re.escape(chr(0x1f)) +  # Flag (2 any ASCII chars + SEP)
+        #         r"(.*?)" + re.escape(chr(0x1f)) +  # Message (non-greedy to next SEP)
+        #         r"(.{2})" + re.escape(chr(0x1f)) +  # Sequence (2 ASCII chars + SEP)
+        #         r"(\d+),"  # ID (digits only)
+        #         r"(-?\d+),"  # Signal strength
+        #         r"(-?\d+)"  # SNR
+        # )
 
         # This is kinda insecure. A vulnerability will be present here. because we don't strip symbols from the
         # message coming in.
-        match = re.match(pattern, message)
-        print(match)
-        if match and len(match.groups()) == 8:
-            chunks = match.groups()  # ('5', '6', '\x10', '<Cool message>', '!', '-13', '11')
-            self.fromAddr = chunks[0]
-            self.dataLength = chunks[1]
-            self.flag = chunks[2]
-            self.msg = chunks[3]
-            self.seqNum = chunks[4]
-<<<<<<< Updated upstream
-            self.timeCode = chunks[5]
-=======
+        # match = re.match(pattern, message)
+        # print(match)
+
+        # REGEX SUCKS!
+
+        if message.startswith("+RCV="):
+            message = message[5:]  # Remove "+RCV="
+
+        # Split by comma
+        parts = message.split(',')
+
+        # Base structure
+        addr = parts[0]  # Could be empty
+        length = parts[1]
+        payload = parts[2]
+        signal = parts[3]
+        snr = parts[4]
+
+
+        # Now split payload by SEP (0x1F)
+        payload_parts = payload.split(chr(0x1f))
+
+        # Extract details
+        flag = payload_parts[0][:2]
+        msg = payload_parts[1]
+        seq = payload_parts[2][:2]
+        timec = payload_parts[3]
+
+
+
+        # Store in dictionary (table-like)
+        result = {
+            "address": addr,
+            "length": int(length),
+            "flag": flag,
+            "message": msg,
+            "sequence": seq,
+            "time": int(timec),
+            "signal": int(signal),
+            "snr": int(snr)
+        }
+
+        # for k, v in result.items():
+        #     print(f"{k}: {repr(v)}")
+
+        if result and len(result) == 8:
+            # chunks = match.groups()  # ('5', '6', '\x10', '<Cool message>', '!', '-13', '11')
+            self.fromAddr = result["address"]
+            self.dataLength = result["length"]
+            self.flag = result["flag"]
+            self.msg = result["message"]
+            self.seqNum = result["sequence"]
+            # self.timeCode = chunks["time"]
             #self.timeCode = chunks[5]
-            self.messageTime = int(chunks[5])  # Epoch seconds extracted from the packet
->>>>>>> Stashed changes
-            self.DBM = chunks[6]
-            self.SNR = chunks[7]
+            self.messageTime = int(result["time"])  # Epoch seconds extracted from the packet
+
+            self.DBM = result["signal"]
+            self.SNR = result["snr"]
 
             if self.fromAddr == 0:
                 self.broadCast = True

@@ -56,17 +56,21 @@ class Messenger:
     def ackMessage(self, msg):
         print("[Messenger response]")
         print(msg.ascii_to_binary(msg.flag))
-        if msg.ascii_to_binary(msg.flag)[3] == "1":
+        if msg.ascii_to_binary(msg.flag)[11] == "1":
             time.sleep(.5)
             print("[Messenger] Acking message...")
             replyPacket = Message.Message()
-            replyPacket.msg = "1"
+            # replyPacket = replyPacket.newMessage("",msg.fromAddr)
             replyPacket.toAddr = msg.fromAddr
+            replyPacket.msg = "ACK"
             replyPacket.seqNum = msg.seqNum
-            replyPacket.flag = msg.binary_to_ascii("10000000")
+            replyPacket.flag = replyPacket.binary_to_ascii("0000000010000000")
             replyPacket.messageTime = int(time.time())
-            replyPacket.data = Message.messageToCommand(replyPacket)
-            self.comm.send(replyPacket.data,True)
+            replyPacket.data = replyPacket.messageToCommand(replyPacket)
+            print("[Messenger] FLAG: " + replyPacket.flag)
+            print("[Messenger] SEQ: " + replyPacket.seqNum)
+            self.comm.send(replyPacket.data, False)
+
 
     def RecievedMessage(self, msg):
         # Converts message serial string into Messenger object.
@@ -83,12 +87,12 @@ class Messenger:
             MsgPacket = Message.Message()
 
             MsgPacket = MsgPacket.recievedMessage(msg)
-            if MsgPacket.ascii_to_binary(MsgPacket.flag)[2] == "1":
+            print("MESSAGE HAS BEEN RECEIVED")
+            print(MsgPacket.ascii_to_binary(MsgPacket.flag)[10])
+            if MsgPacket.ascii_to_binary(MsgPacket.flag)[10] == "1":
                 # Address bit is raised, handle accordingly.
                 self.tr.received(MsgPacket)
                 return
-
-            MsgPacket.recievedMessage(msg)
 
             try:
                 self.lastMessageSent.reply(MsgPacket)
@@ -107,6 +111,8 @@ class Messenger:
         if ignoreCTS or not self.clearToSend:
             self.lastMessageSent = Message
             self.comm.send(Message.data, False)
+            print("[Messenger] FLAG: " + Message.flag)
+            print("[Messenger] SEQ: " + Message.seqNum)
 
     def ChatMessage(self, msg):
         if self.clearToSend and self.clearToSendIssueTime:

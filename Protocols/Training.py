@@ -21,19 +21,13 @@ class Training:
         print("LoRa Chat: Establishing an address. 30s...")
         # To begin, we will issue a message asking for others addresses.
         RequestPacket = Message.Message()
-        RequestPacket.flag = RequestPacket.binary_to_ascii("00110000")
+        RequestPacket.flag = RequestPacket.binary_to_ascii("0000000000110000")
         RequestPacket.toAddr = 0
-        RequestPacket.seqNum = RequestPacket.binary_to_ascii("0" + format(random.getrandbits(7), '07b'))
-        RequestPacket.messageTime = int(time.time())
-<<<<<<< Updated upstream
-        RequestPacket.msg = "moawdawdawd"
-        RequestPacket.dataLength = len(RequestPacket.msg) + 5 + 10
-        RequestPacket.data = messageToCommand(RequestPacket)
-=======
-        RequestPacket.msg = ""
-        RequestPacket.data = RequestPacket.messageToCommand(RequestPacket)
->>>>>>> Stashed changes
 
+        RequestPacket.seqNum = RequestPacket.binary_to_ascii("00" + format(random.getrandbits(14), '014b'))
+        RequestPacket.messageTime = int(time.time())
+        RequestPacket.msg = "SEARCH"
+        RequestPacket.data = RequestPacket.messageToCommand(RequestPacket)
         self.searchingSeqNum = RequestPacket.seqNum
 
         self.messenger.CustomMessage(RequestPacket, False)
@@ -61,10 +55,7 @@ class Training:
         self.messenger.clearToSend = False
         self.messenger.clearToSendIssueTime = time.time()
         print("[Trainer] Completed training...")
-<<<<<<< Updated upstream
-=======
         self.messenger.socketio.emit('system_message', {'message': '✅ Training completed!'})
->>>>>>> Stashed changes
 
     # Does the 16 bit conversions.
     def int_to_two_ascii(self, integer):
@@ -93,7 +84,7 @@ class Training:
 
         time.sleep(offset)
         RequestPacket = Message.Message()
-        RequestPacket.flag = RequestPacket.binary_to_ascii("00100001")  # Just the init flag, NO CTS.
+        RequestPacket.flag = RequestPacket.binary_to_ascii("0000000000100001")  # Just the init flag, NO CTS.
         RequestPacket.toAddr = pkt.fromAddr
         RequestPacket.seqNum = pkt.seqNum
         RequestPacket.messageTime = int(time.time())
@@ -127,9 +118,11 @@ class Training:
                 self.addressMessages.append(int(binary1 + binary2, 2))
                 print(self.addressMessages)
         else:
+            print("[Trainer] Reply approved")
             # Reply approved
             # Try to reply about your address.
-            if pkt.ascii_to_binary(pkt.flag)[3] == "1":  # This is a reply message, because CTS is toggled up.
+            # print(pkt.ascii_to_binary(pkt.flag)[1])
+            if pkt.ascii_to_binary(pkt.flag)[11] == "1":  # This is a reply message, because CTS is toggled up.
                 #TODO: Check if our addres is in the initialization range, if so abort.
                 print(self.messenger.myAddress)
                 if self.messenger.myAddress > 65000:

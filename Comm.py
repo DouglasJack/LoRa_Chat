@@ -49,13 +49,13 @@ class Comm:
 
     # All messages MUST be sent as a broadcast.
     def send(self, message, skipDecode=False):
-        # print("[COMM] SENDING: " + str(message + "\r\n"))
+        print("[COMM] SENDING: " + str(message + "\r\n"))
         message = message + "\r\n"
         if skipDecode:
-            message = message.encode("ascii","ignore").decode("ascii")
+            message = message.encode("ascii", "ignore").decode("ascii")
         else:
             message = message.encode("ascii")
 
-        print(message)
+        # print(message)
         self.serial.write(message)
         # self.serial.write((message + "\r\n").encode("ascii"))

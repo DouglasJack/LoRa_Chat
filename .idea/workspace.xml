@@ -4,7 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="46c0bfe9-f6d2-4dc0-a352-78d53c6daae4" name="Changes" comment="" />
+    <list default="true" id="46c0bfe9-f6d2-4dc0-a352-78d53c6daae4" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Comm.py" beforeDir="false" afterPath="$PROJECT_DIR$/Comm.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Message.py" beforeDir="false" afterPath="$PROJECT_DIR$/Message.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Messenger.py" beforeDir="false" afterPath="$PROJECT_DIR$/Messenger.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Protocols/DirectMessage.py" beforeDir="false" afterPath="$PROJECT_DIR$/Protocols/DirectMessage.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Protocols/Training.py" beforeDir="false" afterPath="$PROJECT_DIR$/Protocols/Training.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -17,23 +25,27 @@
       </list>
     </option>
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "customColor": "",
-  "associatedIndex": 8
-}]]></component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 8
+}</component>
   <component name="ProjectId" id="2wPqHnNGnhj4NMv4IgmDMdrG2cy" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.Comm.executor": "Run",
-    "Python.main.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "last_opened_file_path": "F:/CS409/LoRa_Chat"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.Comm.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Message.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;F:/CS409/LoRa_Chat&quot;
   }
-}]]></component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -51,5 +63,28 @@
       <updated>1745953470932</updated>
     </task>
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="origin/Jack" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
 </project>

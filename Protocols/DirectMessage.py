@@ -37,7 +37,10 @@ class DirectMessage:
         Messenger.clearToSendIssueTime = time.time() + 30
         Messenger.lastMessageSent = self  #Last message sent
         Messenger.comm.send(self.pkt.data)  # The message packet itself
+        print("[DM] FLAG: " + self.pkt.flag)
         self.sendAttempts += 1
+
+        self.Messenger = Messenger
 
         # Thread and wait response for 30s... If none by end time, abort.
         self.responseThread = threading.Thread(target=self.threadAwaitResponse)
@@ -46,18 +49,22 @@ class DirectMessage:
     def reply(self, Message):
         print("[DM] Received response from device.")
         if Message.seqNum == self.pkt.seqNum:
+            print("[DM] Message collected!")
             # Same sequence number, this is a reply to this DMs message.
             # If not, ignore this message.
-            if Message.ascii_to_binary(Message.flag)[3] == "1":
+            if Message.ascii_to_binary(Message.flag)[8] == "1":
+                print("[DM] Packet ack complete, ending.")
                 # ACK and SeqNUM are toggled up. So we can
                 self.success = True
                 self.responseThread.stop()
+                self.Messenger.clearToSend = False
+                self.Messenger.clearToSendIssueTime = time.time()
 
     def composePacket(self):
         RequestPacket = Message.Message()
         RequestPacket.newMessage(self.msg)
         # RequestPacket = Message.Message()
-        RequestPacket.flag = RequestPacket.binary_to_ascii("00010000")
+        RequestPacket.flag = RequestPacket.binary_to_ascii("0000000000010000")
         RequestPacket.toAddr = self.dest
         # RequestPacket.seqNum = RequestPacket.binary_to_ascii("0" + format(random.getrandbits(7), '07b'))
         # RequestPacket.messageTime = int(time.time())

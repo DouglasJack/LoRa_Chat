@@ -13,9 +13,7 @@ class Training:
         self.messenger = messenger
         self.searchingSeqNum = 0
         # TODO: Move addressMessages to class for memorizing hosts.
-        self.addressMessages = []  # This should NEVER be cleared during device operation.
-        self.addressMessages.append(120)  # TODO: REMOVE
-        self.addressMessages.append(1225)  # TODO: REMOVE
+        self.addressMessages = self.messenger.hostTracker.knownHosts  # This should NEVER be cleared during device operation.
 
     def searching(self):
         print("LoRa Chat: Establishing an address. 30s...")
@@ -100,7 +98,7 @@ class Training:
         if pkt.seqNum == self.searchingSeqNum:
             print("[Trainer] Addresses received from: " + pkt.fromAddr)
             #TODO: Set it up so it only adds addresses that aren't known.
-            self.addressMessages.append(int(pkt.fromAddr))
+            # self.addressMessages.append(int(pkt.fromAddr))
 
             # GO through the message and strip out potential address lists.
             if len(pkt.msg) % 2 != 0 and len(pkt.msg) > 0:
@@ -115,7 +113,8 @@ class Training:
                 binary1 = bin(ascii_val1)[2:].zfill(8)
                 binary2 = bin(ascii_val2)[2:].zfill(8)
                 print("[Trainer] new address: " + str(binary1 + binary2))
-                self.addressMessages.append(int(binary1 + binary2, 2))
+                # self.addressMessages.append(int(binary1 + binary2, 2))
+                self.messenger.hostTracker.addHost(int(binary1 + binary2, 2))
                 print(self.addressMessages)
         else:
             print("[Trainer] Reply approved")

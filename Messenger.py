@@ -6,7 +6,7 @@ import Message
 import time
 
 import Protocols.Training
-from Protocols import DirectMessage
+from Protocols import DirectMessage, HostsTracker
 
 
 def MessageToCodes(msg):
@@ -48,6 +48,7 @@ class Messenger:
         self.lastMessageSent = None
         self.clearToSend = False  # IF ENABLED, No messages can be sent
         self.clearToSendIssueTime = None
+        self.hostTracker = HostsTracker.HostsTracker(self)
         time.sleep(1)  # This is required. (Used to setup thread in COMM)
         self.tr = Protocols.Training.Training(self)
         self.trainingThread = threading.Thread(target=self.tr.searching, daemon=True)
@@ -87,8 +88,8 @@ class Messenger:
             MsgPacket = Message.Message()
 
             MsgPacket = MsgPacket.recievedMessage(msg)
-            print("MESSAGE HAS BEEN RECEIVED")
-            print(MsgPacket.ascii_to_binary(MsgPacket.flag)[10])
+            self.hostTracker.addHost(MsgPacket.fromAddr)
+
             if MsgPacket.ascii_to_binary(MsgPacket.flag)[10] == "1":
                 # Address bit is raised, handle accordingly.
                 self.tr.received(MsgPacket)

@@ -48,9 +48,14 @@
     <!-- Footer text -->
     <footer>Secure LoRa Communication at NMSU by Cellular Networks students 2025</footer>
 
+    <audio id="sendSound" src="{{ url_for('static', filename='sounds/send.mp3') }}"></audio>
+    <audio id="receiveSound" src="{{ url_for('static', filename='sounds/receive.mp3') }}"></audio>
+
     <!-- Auto-scroll, WebSocket, Connection Status and Enter to send -->
     <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
     <script>
+        var sendSound = document.getElementById('sendSound');
+        var receiveSound = document.getElementById('receiveSound');
         var socket = io();
 
         // Connection Status Messages
@@ -72,8 +77,11 @@
             // Differentiate "You" messages
             if (data.message.includes("You:")) {
                 p.classList.add('you');
+                sendSound.play();
+
             } else {
                 p.classList.add('other');
+                receiveSound.play();
             }
 
             chatBox.appendChild(p);

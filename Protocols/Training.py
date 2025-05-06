@@ -73,7 +73,7 @@ class Training:
         addressesString = ""
         for id in self.addressMessages:
             print("Encoding "+str(id))
-            char1, char2 = self.int_to_two_ascii(id)
+            char1, char2 = self.int_to_two_ascii(int(id))
             addressesString = f"{addressesString}{char1}{char2}"
 
         time.sleep(offset)

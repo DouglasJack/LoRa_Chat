@@ -8,14 +8,6 @@ import time
 
 from flask_socketio import emit
 
-def messageToCommand(messageClass):
-    return f"AT+SEND={messageClass.toAddr},{messageClass.dataLength},{messageClass.flag}{chr(0x1F)}{messageClass.msg}{chr(0x1F)}{messageClass.seqNum}{chr(0x1F)}{messageClass.messageTime}"
-
-
-def binary_to_ascii(binary: str) -> str:
-    # TODO, Ensure that anything sent here does not become the 0x1F character.
-    return ''.join(chr(int(b, 2)) for b in binary.split())
-
 
 class Training:
     def __init__(self, messenger):
@@ -23,23 +15,20 @@ class Training:
         self.training_in_progress = False
         self.searchingSeqNum = 0
         # TODO: Move addressMessages to class for memorizing hosts.
-        self.addressMessages = []  # This should NEVER be cleared during device operation.
-        self.addressMessages.append(120)  # TODO: REMOVE
-        self.addressMessages.append(1225)  # TODO: REMOVE
+        self.addressMessages = self.messenger.hostTracker.knownHosts  # This should NEVER be cleared during device operation.
 
     def searching(self):
         self.training_in_progress = True
         print("LoRa Chat: Establishing an address. 30s...")
         # To begin, we will issue a message asking for others addresses.
         RequestPacket = Message.Message()
-        RequestPacket.flag = RequestPacket.binary_to_ascii("00110000")
+        RequestPacket.flag = RequestPacket.binary_to_ascii("0000000000110000")
         RequestPacket.toAddr = 0
-        RequestPacket.seqNum = RequestPacket.binary_to_ascii("0" + format(random.getrandbits(7), '07b'))
-        RequestPacket.messageTime = int(time.time())
-        RequestPacket.msg = ""
-        RequestPacket.dataLength = len(RequestPacket.msg) + 5 + 10
-        RequestPacket.data = messageToCommand(RequestPacket)
 
+        RequestPacket.seqNum = RequestPacket.binary_to_ascii("00" + format(random.getrandbits(14), '014b'))
+        RequestPacket.messageTime = int(time.time())
+        RequestPacket.msg = "SEARCH"
+        RequestPacket.data = RequestPacket.messageToCommand(RequestPacket)
         self.searchingSeqNum = RequestPacket.seqNum
 
         self.messenger.CustomMessage(RequestPacket, False)
@@ -64,21 +53,15 @@ class Training:
         self.messenger.socketio.emit('system_message', {'message': '✅ Training completed!'})
     # Does the 16 bit conversions.
     def int_to_two_ascii(self, integer):
+        if not 1 <= integer <= 16383:
+            raise ValueError(
+                "Input integer must be between 1 and 16383 to be represented by two standard ASCII characters in this scheme.")
 
-        # Convert integer to 16-bit binary string (zfill ensures leading zeros)
-        binary_string = bin(integer)[2:].zfill(16)
+        val1 = integer // 128
+        val2 = integer % 128
 
-        # Split the 16-bit binary string into two 8-bit chunks
-        binary_chunk1 = binary_string[:8]
-        binary_chunk2 = binary_string[8:]
-
-        # Convert each 8-bit binary chunk to an integer
-        int_chunk1 = int(binary_chunk1, 2)
-        int_chunk2 = int(binary_chunk2, 2)
-
-        # Convert each integer chunk to its corresponding ASCII character
-        ascii_char1 = chr(int_chunk1)
-        ascii_char2 = chr(int_chunk2)
+        ascii_char1 = chr(val1)
+        ascii_char2 = chr(val2)
 
         return ascii_char1, ascii_char2
 
@@ -89,18 +72,18 @@ class Training:
         # Generates a host list
         addressesString = ""
         for id in self.addressMessages:
+            print("Encoding "+str(id))
             char1, char2 = self.int_to_two_ascii(id)
             addressesString = f"{addressesString}{char1}{char2}"
 
         time.sleep(offset)
         RequestPacket = Message.Message()
-        RequestPacket.flag = RequestPacket.binary_to_ascii("00100001")  # Just the init flag, NO CTS.
+        RequestPacket.flag = RequestPacket.binary_to_ascii("0000000000100001")  # Just the init flag, NO CTS.
         RequestPacket.toAddr = pkt.fromAddr
         RequestPacket.seqNum = pkt.seqNum
         RequestPacket.messageTime = int(time.time())
         RequestPacket.msg = addressesString
-        RequestPacket.dataLength = len(RequestPacket.msg) + 5 + 11
-        RequestPacket.data = messageToCommand(RequestPacket)
+        RequestPacket.data = RequestPacket.messageToCommand(RequestPacket)
         print("[Trainer] ADDRESSES: " + RequestPacket.msg)
         self.messenger.CustomMessage(RequestPacket, True)  # True can be used to force reply.
 
@@ -111,7 +94,7 @@ class Training:
         if pkt.seqNum == self.searchingSeqNum:
             print("[Trainer] Addresses received from: " + pkt.fromAddr)
             #TODO: Set it up so it only adds addresses that aren't known.
-            self.addressMessages.append(int(pkt.fromAddr))
+            # self.addressMessages.append(int(pkt.fromAddr))
 
             # GO through the message and strip out potential address lists.
             if len(pkt.msg) % 2 != 0 and len(pkt.msg) > 0:
@@ -126,12 +109,15 @@ class Training:
                 binary1 = bin(ascii_val1)[2:].zfill(8)
                 binary2 = bin(ascii_val2)[2:].zfill(8)
                 print("[Trainer] new address: " + str(binary1 + binary2))
-                self.addressMessages.append(int(binary1 + binary2, 2))
+                # self.addressMessages.append(int(binary1 + binary2, 2))
+                self.messenger.hostTracker.addHost(int(binary1 + binary2, 2))
                 print(self.addressMessages)
         else:
+            print("[Trainer] Reply approved")
             # Reply approved
             # Try to reply about your address.
-            if pkt.ascii_to_binary(pkt.flag)[3] == "1":  # This is a reply message, because CTS is toggled up.
+            # print(pkt.ascii_to_binary(pkt.flag)[1])
+            if pkt.ascii_to_binary(pkt.flag)[11] == "1":  # This is a reply message, because CTS is toggled up.
                 #TODO: Check if our addres is in the initialization range, if so abort.
                 print(self.messenger.myAddress)
                 if self.messenger.myAddress > 65000:

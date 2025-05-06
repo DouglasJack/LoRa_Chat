@@ -3,7 +3,13 @@ import re
 import time
 from encryption_key import cipher
 
+import hmac
+import hashlib
+
+SHARED_HMAC = b'cMm\x80j%.\xe3\x93\n\xb7Q\xf1T\x96\xff\x1e4|\xe6\x97R\xf5\xfb\xe6\x98\n\xa8\xbd$b\x8c'
+
 PACKET_SEPARATOR = chr(0x1F)
+DEFAULT_HOP_LIMIT = 3
 
 
 class Message:
@@ -50,6 +56,7 @@ class Message:
         self.broadCast = False  # If enabled, message is broadcast.
         self.messageTime = None  # The time in which the message was created/sent/received.
         self.encryption = None  # Not sure on this yet.
+        self.hop_limit = DEFAULT_HOP_LIMIT # hop_limit attribute
 
         self.dataLength = 0  # This is used by Rylr to specify the size of the message
         self.data = None  # This is the full command string. This will get generated at newMessage or recievedMessage
@@ -57,6 +64,7 @@ class Message:
         # Received message only
         self.SNR = 0
         self.DBM = 0
+        self.received_from_addr = None # Track the immediate sender
 
     # Whenever you need to make a new message, as in a chat message.
     # You use this function
@@ -72,12 +80,14 @@ class Message:
 
         self.messageTime = int(time.time())
         self.msg = messageData
-        self.data = self.messageToCommand(self)
 
-        # Encrypt the message
         try:
             encrypted_data = cipher.encrypt(messageData.encode())
             self.msg = encrypted_data.decode()
+
+            mac = hmac.new(SHARED_HMAC, self.msg.encode(), hashlib.sha256).hexdigest()
+            self.msg = f"{self.msg}|HMAC:{mac}"
+
             self.encryption = True
         except Exception as e:
             print(f"[Encryption] Error encrypting message: {e}")
@@ -173,11 +183,27 @@ class Message:
 
             try:
                 decrypted = cipher.decrypt(self.msg.encode())
-                self.msg = decrypted.decode()
-                self.encryption = True
+                decrypted_str = decrypted.decode()
 
+                # Verify HMAC
+                if "|HMAC:" in decrypted_str:
+                    msg_parts = decrypted_str.rplit("|HMAC:", 1)
+                    original_msg, received_msg = msg_parts[0], msg_parts[1]
+
+                    expected_mac = hmac.new(SHARED_HMAC, original_msg.encode(), hashlib.sha256).hexdigest()
+
+                    if not hmac.compare_digest(expected_mac, received_msg):
+                        print("[AUTH] HMAC verification failed. Discarding Message")
+                        return self
+                    else:
+                        self.msg = original_msg
+                        print("[AUTH] HMAC verified.")
+                        self.encryption = True
+                else:
+                    print("[AUTH] No HMAC found in message. Discarding Message")
+                    return self
             except Exception as e:
-                print(f"[Decryption] Failed to decrypt {e}")
+                print("[Decryption] Error decrypting message: {e}")
                 self.encryption = False
 
             print(f"[MessagePKT] RCV: {self.msg}")

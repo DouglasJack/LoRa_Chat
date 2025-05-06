@@ -82,7 +82,7 @@ class RelayManager:
         for _ in range(30):  # Wait up to 30 seconds
             if self.cts_ack_received:
                 print(f"[CTS] Got ACK from {self.responding_node} for SEQ {seq}")
-                # Send actual message relaying here (future implementation)
+                # TODO: Send actual message relaying here
                 return
             time.sleep(1)
 

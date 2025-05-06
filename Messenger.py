@@ -7,6 +7,7 @@ import time
 
 import Protocols.Training
 from Protocols import DirectMessage, HostsTracker
+from Relay import RelayManager
 
 
 def MessageToCodes(msg):
@@ -42,6 +43,7 @@ def MessageToCodes(msg):
 
 class Messenger:
     def __init__(self, sport, socketio=None):
+        self.relay = RelayManager(self)
         self.socketio = socketio
         self.myAddress = 0
         self.comm = Comm.Comm(sport, self)
@@ -85,6 +87,11 @@ class Messenger:
             if mCode != "OKAY!" and self.lastMessageSent:
                 self.lastMessageSent.handleError(mCode, self)
         else:
+
+            if msg.startswith("FROM:"):
+                self.relay.handle_incoming(msg, None)
+                return
+    
             # Should be a recieved message.
             MsgPacket = Message.Message()
 

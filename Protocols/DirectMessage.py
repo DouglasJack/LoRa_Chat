@@ -31,6 +31,8 @@ class DirectMessage:
         self.Messenger = Messenger
         if self.sendAttempts > 1:
             print("[DM] Sending to address has failed, switching to [Relay]")
+            packet_to_send = self.pkt.data
+            self.Messenger.relay.broadcast_cts(self.dest, packet_to_send)
             return
 
         Messenger.clearToSend = True

@@ -28,6 +28,7 @@ class Comm:
             newAddr = (math.ceil(random.random() * 383)) + 16000
             self.messenger.myAddress = newAddr
             self.serial.write(str("AT+ADDRESS=" + str(newAddr) + "\r\n").encode())
+            print("[COMM] Default assigned ADDR: "+str(newAddr))
 
             self.thread = threading.Thread(target=self._listener, daemon=True)  # Daemon allows background threading.
             self.thread.start()

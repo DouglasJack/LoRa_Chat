@@ -85,6 +85,7 @@ class Training:
         RequestPacket.messageTime = int(time.time())
         RequestPacket.msg = addressesString
         RequestPacket.data = RequestPacket.messageToCommand(RequestPacket)
+        print("[Trainer] sending to: "+RequestPacket.toAddr)
         print("[Trainer] ADDRESSES: " + RequestPacket.msg)
 
         self.messenger.CustomMessage(RequestPacket, True)  # True can be used to force reply.
@@ -124,7 +125,7 @@ class Training:
             if pkt.ascii_to_binary(pkt.flag)[11] == "1":  # This is a reply message, because CTS is toggled up.
                 #TODO: Check if our addres is in the initialization range, if so abort.
                 print(self.messenger.myAddress)
-                if self.messenger.myAddress > 65000:
+                if self.messenger.myAddress > 16000:
                     print("[Trainer] You are in training mode. TODO: DO NOT REPLY IN TRAINING MODE.")
 
                 offset = random.random() * 15  # offset of 15, gives us lots of padding and fits within 30s window.

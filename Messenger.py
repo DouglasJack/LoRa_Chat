@@ -93,13 +93,16 @@ class Messenger:
 
             MsgPacket = MsgPacket.recievedMessage(msg)
             print("[Messenger] Got packet!"+MsgPacket.fromAddr)
-            self.hostTracker.addHost(MsgPacket.fromAddr)
 
-            if MsgPacket.ascii_to_binary(MsgPacket.flag)[13] == "1":
-                self.relay.handle_incoming(MsgPacket)
-                return
 
             print(MsgPacket.ascii_to_binary(MsgPacket.flag))
+            self.hostTracker.addHost(int(MsgPacket.fromAddr))
+            if MsgPacket.ascii_to_binary(MsgPacket.flag)[13] == "1":
+                print("[Messenger] -> [Relay]")
+                self.relay.relayMessageIncoming(MsgPacket)
+                return
+
+
             if MsgPacket.ascii_to_binary(MsgPacket.flag)[10] == "1":
                 # Address bit is raised, handle accordingly.
                 self.tr.received(MsgPacket)

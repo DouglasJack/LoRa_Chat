@@ -52,9 +52,9 @@ class Messenger:
         self.hostTracker = HostsTracker.HostsTracker(self)
         self.relay = RelayManager(self)
         time.sleep(1)  # This is required. (Used to setup thread in COMM)
-        self.tr = Protocols.Training.Training(self)
-        self.trainingThread = threading.Thread(target=self.tr.searching, daemon=True)
-        self.trainingThread.start()
+        # self.tr = Protocols.Training.Training(self)
+        # self.trainingThread = threading.Thread(target=self.tr.searching, daemon=True)
+        # self.trainingThread.start()
 
     def ackMessage(self, msg):
         print("[Messenger response]")
@@ -91,13 +91,16 @@ class Messenger:
 
             MsgPacket = MsgPacket.recievedMessage(msg)
             print("[Messenger] Got packet!"+MsgPacket.fromAddr)
-            self.hostTracker.addHost(MsgPacket.fromAddr)
 
-            if MsgPacket.ascii_to_binary(MsgPacket.flag)[13] == "1":
-                self.relay.handle_incoming(MsgPacket)
-                return
 
             print(MsgPacket.ascii_to_binary(MsgPacket.flag))
+            self.hostTracker.addHost(int(MsgPacket.fromAddr))
+            if MsgPacket.ascii_to_binary(MsgPacket.flag)[13] == "1":
+                print("[Messenger] -> [Relay]")
+                self.relay.relayMessageIncoming(MsgPacket)
+                return
+
+
             if MsgPacket.ascii_to_binary(MsgPacket.flag)[10] == "1":
                 # Address bit is raised, handle accordingly.
                 self.tr.received(MsgPacket)

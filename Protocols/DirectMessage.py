@@ -24,7 +24,7 @@ class DirectMessage:
 
     def threadAwaitResponse(self):
         time.sleep(30)
-        if not self.success:
+        if not self.success and self.sendAttempts <= 5:
             self.send(self.Messenger)
 
     def send(self, Messenger):

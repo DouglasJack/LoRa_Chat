@@ -24,6 +24,7 @@ class Comm:
             self.serial = serial.Serial(self.serialPort, 115200)
             # self.serial.write(str("AT+MODE=2,3000,9000\r\n").encode())  # CLASS C
             self.serial.write(str("AT+NETWORKID=" + str(self.networkid) + "\r\n").encode())
+            self.serial.write(str("AT+PARAMETER=11,9,4,12\r\n").encode())
 
             newAddr = (math.ceil(random.random() * 383)) + 16000
             self.messenger.myAddress = newAddr

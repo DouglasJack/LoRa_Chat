@@ -25,6 +25,7 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "Python.Comm.executor": "Run",
+    "Python.Messenger.executor": "Run",
     "Python.Relay.executor": "Run",
     "Python.Training.executor": "Run",
     "Python.main.executor": "Run",

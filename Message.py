@@ -75,7 +75,7 @@ class Message:
         # Return two ASCII characters
         return chr(high7) + chr(low7)
 
-    def asciiToInteger(self,text: str) -> int:
+    def asciiToInteger(self, text: str) -> int:
         if len(text) != 2:
             raise ValueError("Requires exactly 2 characters.")
         for c in text:
@@ -97,6 +97,10 @@ class Message:
         self.messageTime = None  # The time in which the message was created/sent/received.
         self.encryption = None  # Not sure on this yet.
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+        self.hop_limit = DEFAULT_HOP_LIMIT  # hop_limit attribute
+>>>>>>> Stashed changes
 =======
         self.hop_limit = DEFAULT_HOP_LIMIT  # hop_limit attribute
 >>>>>>> Stashed changes
@@ -133,6 +137,13 @@ class Message:
         try:
             encrypted_data = cipher.encrypt(messageData.encode())
             self.msg = encrypted_data.decode()
+<<<<<<< Updated upstream
+=======
+
+            mac = hmac.new(SHARED_HMAC, self.msg.encode(), hashlib.sha256).hexdigest()
+            self.msg = f"{self.msg}|HMAC:{mac}"
+
+>>>>>>> Stashed changes
             self.encryption = True
         except Exception as e:
             print(f"[Encryption] Error encrypting message: {e}")
@@ -224,9 +235,36 @@ class Message:
                 self.broadCast = True
 
             try:
-                decrypted = cipher.decrypt(self.msg.encode())
+                # Split the message and HMAC in MSG packet.
+                msg_parts = self.msg.split("|HMAC:")
+
+                decrypted = cipher.decrypt(msg_parts[0].encode())
                 self.msg = decrypted.decode()
+<<<<<<< Updated upstream
                 self.encryption = True
+=======
+                # self.encryption = True
+
+                if len(msg_parts) == 2:
+                    print("MSG: " + msg_parts[0])
+                    print("HMAC: " + msg_parts[1])
+                    print("[AUTH] HMAC APPLIED")
+                    expected_mac = hmac.new(SHARED_HMAC, msg_parts[0].encode(), hashlib.sha256).hexdigest()
+                    if not hmac.compare_digest(expected_mac, msg_parts[1]):
+                        print("[AUTH] HMAC FAILED!")
+                    else:
+                        print("[AUTH] HMAC CHECKS!")
+                        self.encryption = True
+
+                # print("[MESSAGE] "+self.msg)
+                # msg_parts = self.msg.encode().rplit("|HMAC:", 1)
+                # original_msg, received_msg = msg_parts[0], msg_parts[1]
+                # decrypted = cipher.decrypt(original_msg)
+                # decrypted_str = decrypted.decode()
+                #
+                #
+                # self.msg = decrypted
+>>>>>>> Stashed changes
 
             except Exception as e:
                 print(f"[Decryption] Failed to decrypt {e}")

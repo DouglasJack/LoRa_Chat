@@ -31,6 +31,8 @@ class DirectMessage:
         self.Messenger = Messenger
         if self.sendAttempts > 1:
             print("[DM] Sending to address has failed, switching to [Relay]")
+            packet_to_send = self.pkt.data
+            self.Messenger.relay.broadcast_cts(self.dest, packet_to_send)
             return
 
         Messenger.clearToSend = True
@@ -52,13 +54,23 @@ class DirectMessage:
             print("[DM] Message collected!")
             # Same sequence number, this is a reply to this DMs message.
             # If not, ignore this message.
-            if Message.ascii_to_binary(Message.flag)[8] == "1":
+            if Message.ascii_to_binary(Message.flag)[7] == "1":
                 print("[DM] Packet ack complete, ending.")
                 # ACK and SeqNUM are toggled up. So we can
+<<<<<<< Updated upstream
                 self.success = True
                 self.responseThread.stop()
                 self.Messenger.clearToSend = False
                 self.Messenger.clearToSendIssueTime = time.time()
+=======
+
+                print("[DM] (DEBUG) IGNORING ENDING FOR RELAY!")
+                # self.success = True
+                # self.Messenger.clearToSend = False
+                # self.Messenger.clearToSendIssueTime = time.time()
+                # self.responseThread.stop()
+
+>>>>>>> Stashed changes
 
     def composePacket(self):
         RequestPacket = Message.Message()

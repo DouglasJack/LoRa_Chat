@@ -85,8 +85,8 @@ class Message:
             encrypted_data = cipher.encrypt(messageData.encode())
             self.msg = encrypted_data.decode()
 
-            mac = hmac.new(SHARED_HMAC, self.msg.encode(), hashlib.sha256).hexdigest()
-            self.msg = f"{self.msg}|HMAC:{mac}"
+            # mac = hmac.new(SHARED_HMAC, self.msg.encode(), hashlib.sha256).hexdigest()
+            # self.msg = f"{self.msg}|HMAC:{mac}"
 
             self.encryption = True
         except Exception as e:
@@ -183,25 +183,34 @@ class Message:
 
             try:
                 decrypted = cipher.decrypt(self.msg.encode())
-                decrypted_str = decrypted.decode()
+                self.msg = decrypted.decode()
+                self.encryption = True
+                # print("[MESSAGE] "+self.msg)
+                # msg_parts = self.msg.encode().rplit("|HMAC:", 1)
+                # original_msg, received_msg = msg_parts[0], msg_parts[1]
+                # decrypted = cipher.decrypt(original_msg)
+                # decrypted_str = decrypted.decode()
+                #
+                #
+                # self.msg = decrypted
 
                 # Verify HMAC
-                if "|HMAC:" in decrypted_str:
-                    msg_parts = decrypted_str.rplit("|HMAC:", 1)
-                    original_msg, received_msg = msg_parts[0], msg_parts[1]
-
-                    expected_mac = hmac.new(SHARED_HMAC, original_msg.encode(), hashlib.sha256).hexdigest()
-
-                    if not hmac.compare_digest(expected_mac, received_msg):
-                        print("[AUTH] HMAC verification failed. Discarding Message")
-                        return self
-                    else:
-                        self.msg = original_msg
-                        print("[AUTH] HMAC verified.")
-                        self.encryption = True
-                else:
-                    print("[AUTH] No HMAC found in message. Discarding Message")
-                    return self
+                # if "|HMAC:" in decrypted_str:
+                #     msg_parts = decrypted_str.rplit("|HMAC:", 1)
+                #     original_msg, received_msg = msg_parts[0], msg_parts[1]
+                #
+                #     expected_mac = hmac.new(SHARED_HMAC, original_msg.encode(), hashlib.sha256).hexdigest()
+                #
+                #     # if not hmac.compare_digest(expected_mac, received_msg):
+                #     #     print("[AUTH] HMAC verification failed. Discarding Message")
+                #     #     return self
+                #     # else:
+                #     self.msg = original_msg
+                #     print("[AUTH] HMAC verified.")
+                #     self.encryption = True
+                # else:
+                #     print("[AUTH] No HMAC found in message. Discarding Message")
+                #     return self
             except Exception as e:
                 print("[Decryption] Error decrypting message: {e}")
                 self.encryption = False

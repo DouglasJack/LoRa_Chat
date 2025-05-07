@@ -74,6 +74,7 @@ class Training:
         for id in self.addressMessages:
             print("Encoding "+str(id))
             char1, char2 = self.int_to_two_ascii(int(id))
+            print(f"CODE: {char1}{char2}")
             addressesString = f"{addressesString}{char1}{char2}"
 
         time.sleep(offset)

@@ -1,3 +1,4 @@
+import random
 import threading
 from os.path import exists
 
@@ -59,7 +60,7 @@ class Messenger:
         print("[Messenger response]")
         print(msg.ascii_to_binary(msg.flag))
         if msg.ascii_to_binary(msg.flag)[11] == "1":
-            time.sleep(.5)
+            time.sleep(random.random() * 5+.8)
             print("[Messenger] Acking message...")
             replyPacket = Message.Message()
             # replyPacket = replyPacket.newMessage("",msg.fromAddr)

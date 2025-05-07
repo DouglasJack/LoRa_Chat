@@ -40,6 +40,10 @@ class DirectMessage:
         print("[DM] FLAG: " + self.pkt.flag)
         self.sendAttempts += 1
 
+        if self.sendAttempts > 5:
+            self.responseThread.stop()
+            return
+
         self.Messenger = Messenger
 
         # Thread and wait response for 30s... If none by end time, abort.

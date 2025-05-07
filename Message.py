@@ -14,7 +14,8 @@ DEFAULT_HOP_LIMIT = 3
 
 class Message:
     def messageToCommand(self, messageClass):
-        return f"AT+SEND={messageClass.toAddr},{len(f"{messageClass.flag}{chr(0x1F)}{messageClass.msg}{chr(0x1F)}{messageClass.seqNum}{chr(0x1F)}{messageClass.messageTime}")},{messageClass.flag}{chr(0x1F)}{messageClass.msg}{chr(0x1F)}{messageClass.seqNum}{chr(0x1F)}{messageClass.messageTime}"
+        inner_message = f"{messageClass.flag}{chr(0x1F)}{messageClass.msg}{chr(0x1F)}{messageClass.seqNum}{chr(0x1F)}{messageClass.messageTime}"
+        return f"AT+SEND={messageClass.toAddr},{len(inner_message)},{inner_message}"
 
     def ascii_to_binary(self, ascii_str: str) -> str:
         if len(ascii_str) != 2:

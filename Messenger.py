@@ -52,9 +52,9 @@ class Messenger:
         self.hostTracker = HostsTracker.HostsTracker(self)
         self.relay = RelayManager(self)
         time.sleep(1)  # This is required. (Used to setup thread in COMM)
-        # self.tr = Protocols.Training.Training(self)
-        # self.trainingThread = threading.Thread(target=self.tr.searching, daemon=True)
-        # self.trainingThread.start()
+        self.tr = Protocols.Training.Training(self)
+        self.trainingThread = threading.Thread(target=self.tr.searching, daemon=True)
+        self.trainingThread.start()
 
     def ackMessage(self, msg):
         print("[Messenger response]")

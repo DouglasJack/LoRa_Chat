@@ -77,14 +77,9 @@ class Training:
         addressesString = ""
         for id in self.addressMessages:
             print("Encoding "+str(id))
-<<<<<<< Updated upstream
-            char1, char2 = self.int_to_two_ascii(id)
-            addressesString = f"{addressesString}{char1}{char2}"
-=======
             char1 = pkt.integerToAscii(int(id))
             print(f"CODE: {char1}")
             addressesString = f"{addressesString}{char1}"
->>>>>>> Stashed changes
 
         time.sleep(offset)
         RequestPacket = Message.Message()

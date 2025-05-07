@@ -96,7 +96,7 @@ class Message:
         self.broadCast = False  # If enabled, message is broadcast.
         self.messageTime = None  # The time in which the message was created/sent/received.
         self.encryption = None  # Not sure on this yet.
-        self.hop_limit = DEFAULT_HOP_LIMIT  # hop_limit attribute
+        self.hop_limit = 3  # hop_limit attribute
 
         self.dataLength = 0  # This is used by Rylr to specify the size of the message
         self.data = None  # This is the full command string. This will get generated at newMessage or recievedMessage

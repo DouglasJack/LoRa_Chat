@@ -8,6 +8,7 @@ import time
 
 import Protocols.Training
 from Protocols import DirectMessage, HostsTracker
+from Relay import RelayManager
 
 
 def MessageToCodes(msg):
@@ -51,6 +52,7 @@ class Messenger:
         self.clearToSend = False  # IF ENABLED, No messages can be sent
         self.clearToSendIssueTime = None
         self.hostTracker = HostsTracker.HostsTracker(self)
+        self.relay = RelayManager(self)
         time.sleep(1)  # This is required. (Used to setup thread in COMM)
         self.tr = Protocols.Training.Training(self)
         self.trainingThread = threading.Thread(target=self.tr.searching, daemon=True)
@@ -92,6 +94,10 @@ class Messenger:
             MsgPacket = MsgPacket.recievedMessage(msg)
             print("[Messenger] Got packet!"+MsgPacket.fromAddr)
             self.hostTracker.addHost(MsgPacket.fromAddr)
+
+            if MsgPacket.ascii_to_binary(MsgPacket.flag)[13] == "1":
+                self.relay.handle_incoming(MsgPacket)
+                return
 
             print(MsgPacket.ascii_to_binary(MsgPacket.flag))
             if MsgPacket.ascii_to_binary(MsgPacket.flag)[10] == "1":

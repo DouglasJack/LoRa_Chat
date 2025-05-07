@@ -57,10 +57,10 @@ class DirectMessage:
                 print("[DM] Packet ack complete, ending.")
                 print("[DM] (DEBUG) IGNORING ENDING FOR RELAY!")
                 # ACK and SeqNUM are toggled up. So we can
-                # self.success = True
-                # self.Messenger.clearToSend = False
-                # self.Messenger.clearToSendIssueTime = time.time()
-                # self.responseThread.stop()
+                self.success = True
+                self.Messenger.clearToSend = False
+                self.Messenger.clearToSendIssueTime = time.time()
+                self.responseThread.stop()
 
 
     def composePacket(self):

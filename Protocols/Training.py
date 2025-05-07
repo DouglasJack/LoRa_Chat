@@ -77,8 +77,14 @@ class Training:
         addressesString = ""
         for id in self.addressMessages:
             print("Encoding "+str(id))
+<<<<<<< Updated upstream
             char1, char2 = self.int_to_two_ascii(id)
             addressesString = f"{addressesString}{char1}{char2}"
+=======
+            char1 = pkt.integerToAscii(int(id))
+            print(f"CODE: {char1}")
+            addressesString = f"{addressesString}{char1}"
+>>>>>>> Stashed changes
 
         time.sleep(offset)
         RequestPacket = Message.Message()
@@ -89,6 +95,7 @@ class Training:
         RequestPacket.msg = addressesString
         RequestPacket.data = RequestPacket.messageToCommand(RequestPacket)
         print("[Trainer] ADDRESSES: " + RequestPacket.msg)
+
         self.messenger.CustomMessage(RequestPacket, True)  # True can be used to force reply.
 
     def received(self, pkt):
@@ -108,13 +115,15 @@ class Training:
             for i in range(0, len(pkt.msg), 2):
                 char1 = pkt.msg[i]
                 char2 = pkt.msg[i + 1]
-                ascii_val1 = ord(char1)
-                ascii_val2 = ord(char2)
-                binary1 = bin(ascii_val1)[2:].zfill(8)
-                binary2 = bin(ascii_val2)[2:].zfill(8)
-                print("[Trainer] new address: " + str(binary1 + binary2))
+
+                print("Decoding trainer")
+                print(f"{char1}{char2}")
+                value = pkt.asciiToInteger(f"{char1}{char2}")
+
+                print("[Trainer] new address: "+f"{char1}{char2}"+"->"+str(value))
+                # print("[Trainer] new address: " + str(binary1 + binary2))
                 # self.addressMessages.append(int(binary1 + binary2, 2))
-                self.messenger.hostTracker.addHost(int(binary1 + binary2, 2))
+                self.messenger.hostTracker.addHost(value)
                 print(self.addressMessages)
         else:
             print("[Trainer] Reply approved")

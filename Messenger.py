@@ -88,8 +88,10 @@ class Messenger:
             MsgPacket = Message.Message()
 
             MsgPacket = MsgPacket.recievedMessage(msg)
+            print("[Messenger] Got packet!"+MsgPacket.fromAddr)
             self.hostTracker.addHost(MsgPacket.fromAddr)
 
+            print(MsgPacket.ascii_to_binary(MsgPacket.flag))
             if MsgPacket.ascii_to_binary(MsgPacket.flag)[10] == "1":
                 # Address bit is raised, handle accordingly.
                 self.tr.received(MsgPacket)

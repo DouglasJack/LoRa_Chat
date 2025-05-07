@@ -10,36 +10,82 @@ class Message:
     def messageToCommand(self, messageClass):
         return f"AT+SEND={messageClass.toAddr},{len(f"{messageClass.flag}{chr(0x1F)}{messageClass.msg}{chr(0x1F)}{messageClass.seqNum}{chr(0x1F)}{messageClass.messageTime}")},{messageClass.flag}{chr(0x1F)}{messageClass.msg}{chr(0x1F)}{messageClass.seqNum}{chr(0x1F)}{messageClass.messageTime}"
 
-    def ascii_to_binary(self, text: str) -> str:
-        if len(text) != 2:
-            raise ValueError("Only 2-character ASCII strings are supported.")
-        for char in text:
-            if not 0 <= ord(char) <= 127:
-                raise ValueError("Characters must be 7-bit ASCII (0-127).")
+    def ascii_to_binary(self, ascii_str: str) -> str:
+        if len(ascii_str) != 2:
+            raise ValueError("Input string must contain exactly 2 characters")
 
-        # Convert each character to 7-bit binary
-        bin1 = format(ord(text[0]), '07b')
-        bin2 = format(ord(text[1]), '07b')
+            # Convert each character to its ASCII value, then to binary
+        first_byte = format(ord(ascii_str[0]), '08b')
+        second_byte = format(ord(ascii_str[1]), '08b')
 
-        # Add '00' padding to make it 16 bits total
-        return '00' + bin1 + bin2
+        # Force the first bit of each byte to be zero
+        first_byte = '0' + first_byte[1:]
+        second_byte = '0' + second_byte[1:]
+
+        return first_byte + second_byte
 
     def binary_to_ascii(self, binary: str) -> str:
-        binary = binary.replace(" ", "")
-        if len(binary) != 16 or not all(bit in '01' for bit in binary):
-            raise ValueError("Binary string must be exactly 16 bits and contain only '0' or '1'. "+str(len(binary)))
+        return self.binstringToAscii(binary)
 
-        if not binary.startswith("00"):
-            raise ValueError("Binary string must start with '00' as prefix.")
+    def int_to_binary(self, number):
+        if not isinstance(number, int):
+            raise TypeError("Input must be an integer")
 
-        # Extract the two 7-bit chunks
-        bin1 = binary[2:9]
-        bin2 = binary[9:]
+        # Handle negative numbers using two's complement for 16 bits
+        if number < 0:
+            # For negative numbers in 16-bit two's complement
+            # Add 2^16 to get the two's complement representation
+            number = (1 << 16) + number
 
-        char1 = chr(int(bin1, 2))
-        char2 = chr(int(bin2, 2))
+        # Make sure the number fits in 16 bits
+        if number >= (1 << 16):
+            raise ValueError(f"Number {number} is too large to fit in 16 bits")
 
-        return char1 + char2
+        # Convert to binary and pad to 16 bits
+        binary = format(number, '016b')
+
+        return binary
+
+    def binstringToAscii(self, bin_str: str) -> str:
+        if len(bin_str) != 16 or any(c not in '01' for c in bin_str):
+            raise ValueError("Input must be a 14-character binary string containing only '0' and '1'.")
+
+            # Convert binary string to integer
+        value = int(bin_str, 2)
+
+        # Extract high and low 7 bits
+        high7 = (value >> 7) & 0b01111111
+        low7 = value & 0b01111111
+
+        # Return two ASCII characters
+        return chr(high7) + chr(low7)
+
+    def integerToAscii(self, integer: int) -> str:
+        bin_str = self.int_to_binary(integer)
+        if len(bin_str) != 16 or any(c not in '01' for c in bin_str):
+            raise ValueError("Input must be a 14-character binary string containing only '0' and '1'.")
+
+            # Convert binary string to integer
+        value = int(bin_str, 2)
+
+        # Extract high and low 7 bits
+        high7 = (value >> 7) & 0b01111111
+        low7 = value & 0b01111111
+
+        # Return two ASCII characters
+        return chr(high7) + chr(low7)
+
+    def asciiToInteger(self,text: str) -> int:
+        if len(text) != 2:
+            raise ValueError("Requires exactly 2 characters.")
+        for c in text:
+            if not (0 <= ord(c) <= 127):
+                raise ValueError("Characters must be 7-bit ASCII.")
+
+        high7 = ord(text[0])
+        low7 = ord(text[1])
+
+        return (high7 << 7) | low7
 
     def __init__(self):
         self.flag = None  # This is the ascii character flag
@@ -50,6 +96,10 @@ class Message:
         self.broadCast = False  # If enabled, message is broadcast.
         self.messageTime = None  # The time in which the message was created/sent/received.
         self.encryption = None  # Not sure on this yet.
+<<<<<<< Updated upstream
+=======
+        self.hop_limit = DEFAULT_HOP_LIMIT  # hop_limit attribute
+>>>>>>> Stashed changes
 
         self.dataLength = 0  # This is used by Rylr to specify the size of the message
         self.data = None  # This is the full command string. This will get generated at newMessage or recievedMessage
@@ -57,6 +107,10 @@ class Message:
         # Received message only
         self.SNR = 0
         self.DBM = 0
+<<<<<<< Updated upstream
+=======
+        self.received_from_addr = None  # Track the immediate sender
+>>>>>>> Stashed changes
 
     # Whenever you need to make a new message, as in a chat message.
     # You use this function
@@ -68,7 +122,8 @@ class Message:
         self.toAddr = messageAddress
         self.fromAddr = 3  # CHANGE TO DEVICE ADDRESS
 
-        self.seqNum = self.binary_to_ascii("00" + format(random.getrandbits(14), '014b'))  # Generates a random sequence number where 0 is the beginning number.
+        self.seqNum = self.binary_to_ascii("00" + format(random.getrandbits(14),
+                                                         '014b'))  # Generates a random sequence number where 0 is the beginning number.
 
         self.messageTime = int(time.time())
         self.msg = messageData
@@ -127,7 +182,6 @@ class Message:
         signal = parts[3]
         snr = parts[4]
 
-
         # Now split payload by SEP (0x1F)
         payload_parts = payload.split(chr(0x1f))
 
@@ -136,8 +190,6 @@ class Message:
         msg = payload_parts[1]
         seq = payload_parts[2][:2]
         timec = payload_parts[3]
-
-
 
         # Store in dictionary (table-like)
         result = {

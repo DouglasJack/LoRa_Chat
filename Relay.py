@@ -6,6 +6,7 @@ from Protocols import DirectMessage
 
 MAX_HOPS = 5  # Prevent infinite flooding
 
+
 class RelayManager:
     def __init__(self, messenger):
         self.futureRelayMessage = None  # Packet to get sent once a relay is found.
@@ -31,6 +32,7 @@ class RelayManager:
                 if self.DMC.responseThread == None:
                     return
                 # self.DMC.responseThread.stop()
+
 
 
     def DMResponse(self, message):
@@ -157,5 +159,4 @@ class RelayManager:
         requestingRelay.data = requestingRelay.messageToCommand(requestingRelay)
         self.messenger.comm.send(requestingRelay.data, False)
         print(f"[RELAY] Searching for potential relays...")
-
         self.futureRelayMessage = msgPkt

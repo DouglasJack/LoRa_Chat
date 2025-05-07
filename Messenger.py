@@ -1,3 +1,4 @@
+import random
 import threading
 from os.path import exists
 
@@ -42,7 +43,8 @@ def MessageToCodes(msg):
 
 
 class Messenger:
-    def __init__(self, sport):
+    def __init__(self, sport, socketio=None):
+        self.socketio = socketio
         self.myAddress = 0
         self.comm = Comm.Comm(sport, self)
         self.messageCache = []
@@ -60,7 +62,7 @@ class Messenger:
         print("[Messenger response]")
         print(msg.ascii_to_binary(msg.flag))
         if msg.ascii_to_binary(msg.flag)[11] == "1":
-            time.sleep(.5)
+            time.sleep(random.random() * 5+.8)
             print("[Messenger] Acking message...")
             replyPacket = Message.Message()
             # replyPacket = replyPacket.newMessage("",msg.fromAddr)
@@ -126,14 +128,15 @@ class Messenger:
             print("[Messenger] FLAG: " + Message.flag)
             print("[Messenger] SEQ: " + Message.seqNum)
 
-    def ChatMessage(self, msg):
+    def ChatMessage(self, msg: str, dest: int = 0):
+
         if self.clearToSend and self.clearToSendIssueTime:
             if time.time() < self.clearToSendIssueTime:
                 print("[Messenger]: CTS active. Message not sent.")
                 return
         #MsgPacket = Message.Message()
         #MsgPacket.newMessage(msg)
-        DM = DirectMessage.DirectMessage(msg)
+        DM = DirectMessage.DirectMessage(msg, dest)
         DM.send(self)
 
         # Creates a message packet, then sends it. The message will generate the correct data for sending the command.

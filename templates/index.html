@@ -3,56 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <title>LoRa Encrypted Chat</title>
-    <!-- Link to external CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h2>LoRa Encrypted Chat</h2>
+<div class="container">
 
-        <!-- Show connection status -->
-        <div class="status">
-            {% if comm_port %}
-                Connected to: {{ comm_port }}
-            {% else %}
-                No serial port connected. Please enter a port.
-            {% endif %}
-        </div>
+    <h2>LoRa Encrypted Chat</h2>
 
-        <!-- Form to select serial port -->
-        <form method="POST" class="port-box">
-            <label for="comm_port">Select Serial Port:</label><br>
-            <select name="comm_port" required>
-                {% for port in ports %}
-                    <option value="{{ port }}" {% if port == comm_port %}selected{% endif %}>{{ port }}</option>
-                {% endfor %}
-            </select><br>
-            <button type="submit">Set Serial Port</button>
-        </form>
-
-        <!-- Display received messages -->
-        <div class="chat-box">
-            {% for msg in messages %}
-                <p>{{ msg }}</p>
-            {% endfor %}
-        </div>
-
-        <!-- Form to send message -->
-        <div class="input-box">
-            <form method="POST">
-                <textarea name="message" placeholder="Type your message..." required></textarea><br>
-                <button type="submit">Send Message</button>
-            </form>
-        </div>
+    <!-- connection status -->
+    <div class="status">
+        {% if comm_port %}
+            ✅ Connected to: {{ comm_port }}
+        {% else %}
+            ⚠️ No serial port connected.
+        {% endif %}
     </div>
 
-    <!-- Footer text -->
-    <footer>Secure LoRa Communication at NMSU by Cellular Networks students 2025</footer>
+    <!-- serial‑port picker -->
+    <form method="POST" class="port-box">
+        <label for="comm_port">Select Serial Port:</label><br>
+        <select name="comm_port" id="comm_port"
+                required {% if comm_port %}disabled{% endif %}>
+            {% for port in ports %}
+                <option value="{{ port }}" {% if port == comm_port %}selected{% endif %}>
+                    {{ port }}
+                </option>
+            {% endfor %}
+        </select><br>
+        <button type="submit" {% if comm_port %}disabled{% endif %}>Set Serial Port</button>
+    </form>
 
-    <!-- Auto-scroll script -->
-    <script>
-        var chatBox = document.querySelector('.chat-box');
-        chatBox.scrollTop = chatBox.scrollHeight;
-    </script>
+    <!-- ─────────  chat UI  ───────── -->
+    <div class="layout">
+        <!--  left: chat selector  -->
+        <aside class="chat-list">
+            <h3>CHATS</h3>
+            <ul id="rooms">
+                <li data-room="0" class="active">Group Chat (Broadcast)</li>
+            </ul>
+
+            <button id="compose">+ Compose new message</button>
+        </aside>
+
+        <!--  right: history + composer  -->
+        <section class="chat-pane">
+            <div class="chat-box"></div>
+
+            <div class="input-box">
+                <textarea id="messageInput"
+                          placeholder="Type your message..." required></textarea><br>
+                <button onclick="sendMessage()">Send Message</button>
+            </div>
+        </section>
+    </div>
+</div>
+
+<footer>Secure LoRa Communication at NMSU by Cellular Networks students 2025</footer>
+
+<audio id="sendSound"    src="{{ url_for('static', filename='sounds/send.mp3') }}"></audio>
+<audio id="receiveSound" src="{{ url_for('static', filename='sounds/receive.mp3') }}"></audio>
+
+<script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
+<script>
+/* ----------  sounds & socket  ---------- */
+const sendSound    = document.getElementById('sendSound');
+const receiveSound = document.getElementById('receiveSound');
+const socket = io();
+
+/* ----------  room state  ---------- */
+let currentRoom = '0';         // broadcast by default
+const rooms = { '0': [] };      // {roomId : [<p>, …]}
+
+/*  ONE global click listener handles all <li>, including the first one */
+document.getElementById('rooms').addEventListener('click', e => {
+    const li = e.target.closest('li[data-room]');
+    if (li) switchRoom(li.dataset.room);
+});
+
+/*  helper now *only* creates the <li>, no onclick needed         */
+function ensureRoom(id, label) {
+    if (rooms[id]) return;
+    rooms[id] = [];
+    const li = document.createElement('li');
+    li.dataset.room = id;
+    li.textContent  = label ?? `User ${id}`;
+    document.getElementById('rooms').appendChild(li);
+}
+
+/* switch visible conversation */
+function switchRoom(id) {
+    currentRoom = id;
+    document.querySelectorAll('#rooms li').forEach(li =>
+        li.classList.toggle('active', li.dataset.room === id));
+
+    const box = document.querySelector('.chat-box');
+    box.innerHTML = '';
+    rooms[id].forEach(p => box.appendChild(p.cloneNode(true)));
+    box.scrollTop = box.scrollHeight;
+}
+
+/* ----------  incoming message  ---------- */
+socket.on('new_message', data => {
+    /* data = { room:'123', message:'[05‑07 00:51] You: hey' } */
+    const roomId = String(data.room || '0');
+    ensureRoom(roomId, roomId==='0' ? 'Group Chat (Broadcast)' : `User ${roomId}`);
+
+    const p  = document.createElement('p');
+    const m  = data.message.match(/^\[(.*?)\]\s+([^:]+):\s+(.*)$/);
+
+    if (m) {
+        const ts = document.createElement('span');
+        ts.className = 'timestamp';
+        ts.textContent = `[${m[1]}] `;
+
+        const sender = document.createElement('span');
+        sender.className = (m[2].trim()==='You') ? 'timestamp' : 'sender';
+        sender.textContent = `${m[2]}: `;
+
+        const msg = document.createElement('span');
+        msg.className = 'msg';
+        msg.textContent = m[3];
+
+        p.append(ts, sender, msg);
+    } else {
+        p.textContent = data.message;    // fallback
+    }
+
+    if (data.message.includes('You:')) {
+        p.classList.add('you');
+        sendSound.play();
+    } else {
+        p.classList.add('other');
+        receiveSound.play();
+    }
+
+    rooms[roomId].push(p);
+    if (roomId === currentRoom) {
+        document.querySelector('.chat-box').appendChild(p);
+        document.querySelector('.chat-box').scrollTop =
+            document.querySelector('.chat-box').scrollHeight;
+    }
+});
+
+/* ----------  send message  ---------- */
+function sendMessage() {
+    const input = document.getElementById('messageInput');
+    const txt   = input.value.trim();
+    if (!txt) return;
+    socket.emit('send_message', {room: currentRoom, message: txt});
+    input.value = '';
+}
+
+/* ----------  compose new DM  ---------- */
+document.getElementById('compose').onclick = () => {
+    socket.emit('get_hosts');            // ask server for known addresses
+};
+socket.on('host_list', list => {
+    const dest = prompt(
+        'Send to which user?\nChoose address from:\n' + list.join(', ')
+    );
+    if (!dest) return;
+    ensureRoom(dest, `User ${dest}`);
+    switchRoom(dest);
+});
+
+/* ----------  misc UX  ---------- */
+socket.on('connect',    () => console.log('WS connected'));
+socket.on('disconnect', () => alert('Lost connection. Please refresh.'));
+
+document.getElementById('messageInput').addEventListener('keypress', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+window.onload = () => document.getElementById('messageInput').focus();
+</script>
 </body>
 </html>

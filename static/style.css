@@ -9,7 +9,7 @@ body {
 
 /* Main container */
 .container {
-    max-width: 800px;
+    max-width: 1700px;
     margin: 50px auto;
     background: #fff;
     padding: 30px;
@@ -28,19 +28,51 @@ h2 {
 .chat-box {
     border: 1px solid #ddd;
     padding: 15px;
-    height: 300px;
+    height: 350px;
     overflow-y: scroll;
     background: #f9f9f9;
     border-radius: 8px;
     margin-bottom: 20px;
+    scroll-behavior: smooth;
+
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
-/* Single message style */
+/* Base chat message style */
 .chat-box p {
-    margin: 0 0 10px;
-    padding: 8px;
-    background: #e6e6e6;
-    border-radius: 5px;
+    margin: 0;
+    padding: 10px 14px;
+    border-radius: 12px;
+    word-wrap: break-word;
+    color: white;
+    animation: fadeIn 0.3s ease;
+    white-space: pre-wrap;
+    max-width: 85%;
+    display: block;
+}
+
+/* Sent messages (You) */
+.chat-box p.you {
+    background: #7a21fd;
+    margin-left: auto;
+    text-align: right;
+}
+
+/* Received messages (Others) */
+.chat-box p.other {
+    background: #535353;
+    margin-right: auto;
+    text-align: left;
+}
+
+.chat-box p.system {
+    background: transparent;
+    color: #888;
+    text-align: center;
+    font-style: italic;
+    font-size: 14px;
 }
 
 /* Forms and inputs */
@@ -67,7 +99,7 @@ button {
     border: none;
     padding: 12px 24px;
     font-size: 16px;
-    border-radius: 6px;
+    border-radius: 10px;
     cursor: pointer;
     transition: background 0.3s ease;
 }
@@ -91,3 +123,48 @@ footer {
     margin-bottom: 20px;
     text-align: center;
 }
+
+/* Fade-in animation for messages */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Distinct disabled‑state for any button */
+button:disabled,
+button[disabled] {
+    background: #9fb3ff;
+    color: #445;             /* darker text for readability */
+    cursor: not-allowed;     /* shows a 🚫 cursor */
+    filter: grayscale(60%);  /* drains most of the color */
+    opacity: 0.85;           /* keep it solid but clearly different */
+    transition: none;        /* no hover fade */
+}
+
+/* timestamp = italic + light colour (already used) */
+.timestamp {
+    font-style: italic;
+    color: #bbb;
+}
+
+/* sender label for *other* users = bold */
+.sender {
+    font-weight: 700;
+    color: #333;
+}
+
+/* body of the message = bold  */
+.msg {
+    font-weight: 700;
+}
+
+/* layout */
+.layout      { display:flex; gap:12px; }
+.chat-list   { width:220px; background:#f2f2f2; border-radius:8px; padding:12px; }
+.chat-list h3 { margin-top:0; }
+.chat-list ul { list-style:none; padding:0; margin:0 0 12px 0; }
+.chat-list li { padding:6px 8px; border-radius:6px; cursor:pointer; }
+.chat-list li.active, .chat-list li:hover { background:#d8d8ff; }
+
+.chat-pane { flex:1; display:flex; flex-direction:column; }
+

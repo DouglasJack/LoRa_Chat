@@ -3,7 +3,13 @@ import re
 import time
 from encryption_key import cipher
 
+import hmac
+import hashlib
+
+SHARED_HMAC = b'cMm\x80j%.\xe3\x93\n\xb7Q\xf1T\x96\xff\x1e4|\xe6\x97R\xf5\xfb\xe6\x98\n\xa8\xbd$b\x8c'
+
 PACKET_SEPARATOR = chr(0x1F)
+DEFAULT_HOP_LIMIT = 3
 
 
 class Message:
@@ -98,6 +104,7 @@ class Message:
         self.encryption = None  # Not sure on this yet.
         self.hop_limit = 3  # hop_limit attribute
 
+
         self.dataLength = 0  # This is used by Rylr to specify the size of the message
         self.data = None  # This is the full command string. This will get generated at newMessage or recievedMessage
 
@@ -121,15 +128,14 @@ class Message:
 
         self.messageTime = int(time.time())
         self.msg = messageData
-        self.data = self.messageToCommand(self)
 
-        # Encrypt the message
         try:
             encrypted_data = cipher.encrypt(messageData.encode())
             self.msg = encrypted_data.decode()
 
             mac = hmac.new(SHARED_HMAC, self.msg.encode(), hashlib.sha256).hexdigest()
             self.msg = f"{self.msg}|HMAC:{mac}"
+
 
 
             self.encryption = True
@@ -230,6 +236,14 @@ class Message:
                 self.msg = decrypted.decode()
 
                 self.encryption = True
+                # print("[MESSAGE] "+self.msg)
+                # msg_parts = self.msg.encode().rplit("|HMAC:", 1)
+                # original_msg, received_msg = msg_parts[0], msg_parts[1]
+                # decrypted = cipher.decrypt(original_msg)
+                # decrypted_str = decrypted.decode()
+                #
+                #
+                # self.msg = decrypted
 
                 if len(msg_parts) == 2:
                     print("MSG: " + msg_parts[0])
@@ -252,7 +266,7 @@ class Message:
                 # self.msg = decrypted
 
             except Exception as e:
-                print(f"[Decryption] Failed to decrypt {e}")
+                print("[Decryption] Error decrypting message: {e}")
                 self.encryption = False
 
             print(f"[MessagePKT] RCV: {self.msg}")

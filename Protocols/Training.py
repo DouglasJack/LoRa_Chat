@@ -6,16 +6,19 @@ import Message
 import random
 import time
 
+from flask_socketio import emit
 
 
 class Training:
     def __init__(self, messenger):
         self.messenger = messenger
+        self.training_in_progress = False
         self.searchingSeqNum = 0
         # TODO: Move addressMessages to class for memorizing hosts.
         self.addressMessages = self.messenger.hostTracker.knownHosts  # This should NEVER be cleared during device operation.
 
     def searching(self):
+        self.training_in_progress = True
         print("LoRa Chat: Establishing an address. 30s...")
         # To begin, we will issue a message asking for others addresses.
         RequestPacket = Message.Message()
@@ -33,14 +36,8 @@ class Training:
         self.messenger.clearToSendIssueTime = time.time() + 30  # CTS 30s window for replies on address initialization.
         time.sleep(30)  # We wait till CTS is open.
         # NOW, We assign our own address.
+        # Clear CTS requirements.
 
-
-    def recieved(self,pkt):
-        # Determine what the response is. If our CTS window is up, and our last packet contained the flag
-        # Requesting the addresses and the sequence number is correct, then this is a response
-        # Otherwise, this is a cry for help.
-        # From this list of addresses we now have. Choose an address
-        # from 1-10000 that is not in that range.
         nums = set(range(1, 10000)) - set(self.addressMessages)
         if nums:
             rand = random.choice(list(nums))
@@ -49,12 +46,11 @@ class Training:
         else:
             print("[Trainer] ALL ADDRESS HAVE BEEN CONSUMED!!!")
 
-        # Clear CTS requirements.
         self.messenger.clearToSend = False
         self.messenger.clearToSendIssueTime = time.time()
+        self.training_in_progress = False
         print("[Trainer] Completed training...")
         self.messenger.socketio.emit('system_message', {'message': '✅ Training completed!'})
-
     # Does the 16 bit conversions.
     def int_to_two_ascii(self, integer):
         if not 1 <= integer <= 16383:

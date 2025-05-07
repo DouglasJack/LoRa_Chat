@@ -23,12 +23,21 @@
         <!-- Form to select serial port -->
         <form method="POST" class="port-box">
             <label for="comm_port">Select Serial Port:</label><br>
-            <select name="comm_port" required>
+
+            <!-- Disable the dropdown if a port is already chosen -->
+            <select name="comm_port" id="comm_port"
+                    required {% if comm_port %}disabled{% endif %}>
                 {% for port in ports %}
-                    <option value="{{ port }}" {% if port == comm_port %}selected{% endif %}>{{ port }}</option>
+                    <option value="{{ port }}" {% if port == comm_port %}selected{% endif %}>
+                        {{ port }}
+                    </option>
                 {% endfor %}
             </select><br>
-            <button type="submit">Set Serial Port</button>
+
+            <!-- Disable the button too -->
+            <button type="submit" {% if comm_port %}disabled{% endif %}>
+                Set Serial Port
+            </button>
         </form>
 
         <!-- Display received messages -->
@@ -69,16 +78,42 @@
         });
 
         // Handle receiving a new message
-        socket.on('new_message', function(data) {
+        socket.on('new_message', data => {
             const chatBox = document.querySelector('.chat-box');
             const p = document.createElement('p');
-            p.textContent = data.message;
 
-            // Differentiate "You" messages
-            if (data.message.includes("You:")) {
+            //  [MM-DD HH:MM] SENDER: message
+            const m = data.message.match(/^\[(.*?)\]\s+([^:]+):\s+(.*)$/);
+
+            if (m) {
+                // timestamp
+                const ts = document.createElement('span');
+                ts.className = 'timestamp';     // italics / light gray
+                ts.textContent = `[${m[1]}] `;
+
+                // sender label
+                const sender = document.createElement('span');
+                if (m[2].trim() === 'You') {
+                    sender.className = 'timestamp';   // same style as timestamp
+                } else {
+                    sender.className = 'sender';      // bold for others
+                }
+                sender.textContent = `${m[2]}: `;
+
+                // actual message
+                const msg = document.createElement('span');
+                msg.className = 'msg';               // bold body
+                msg.textContent = m[3];
+
+                p.append(ts, sender, msg);
+            } else {          // safety fallback
+                p.textContent = data.message;
+            }
+
+            // Color bubbles and sound effects
+            if (data.message.includes('You:')) {
                 p.classList.add('you');
                 sendSound.play();
-
             } else {
                 p.classList.add('other');
                 receiveSound.play();
@@ -87,6 +122,7 @@
             chatBox.appendChild(p);
             chatBox.scrollTop = chatBox.scrollHeight;
         });
+
 
         socket.on('system_message', function(data) {
             const chatBox = document.querySelector('.chat-box');

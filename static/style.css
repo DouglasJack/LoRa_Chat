@@ -129,3 +129,32 @@ footer {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* Distinct disabled‑state for any button */
+button:disabled,
+button[disabled] {
+    background: #9fb3ff;
+    color: #445;             /* darker text for readability */
+    cursor: not-allowed;     /* shows a 🚫 cursor */
+    filter: grayscale(60%);  /* drains most of the color */
+    opacity: 0.85;           /* keep it solid but clearly different */
+    transition: none;        /* no hover fade */
+}
+
+/* timestamp = italic + light colour (already used) */
+.timestamp {
+    font-style: italic;
+    color: #bbb;
+}
+
+/* sender label for *other* users = bold */
+.sender {
+    font-weight: 700;
+    color: #333;          /* adjust if needed */
+}
+
+/* body of the message = bold (unchanged) */
+.msg {
+    font-weight: 700;
+}
+

@@ -14,20 +14,46 @@ app.secret_key = 'CellularNetworks'  # Secret key for session handling (storing 
 messenger = None  # Will hold the instance of Messenger class managing LoRa communication
 received_messages = []  # List to store incoming messages for displaying on the web page
 
+# ----------  helper to wrap UI events  ----------
+def ui_emit(event, payload):
+    """SocketIO emit that is safe even when called from a thread."""
+    try:
+        socketio.emit(event, payload)
+    except RuntimeError:
+        # called outside app context (background_listener)
+        socketio.start_background_task(socketio.emit, event, payload)
+
+
 # Background thread function to continuously check for received messages
+# def background_listener():
+#     global messenger
+#     while True:
+#         if messenger and messenger.messageCache:								    # Check if messenger is initialized and has cached messages
+#             while messenger.messageCache:									        # Process all messages in the cache
+#                 msg_obj = messenger.messageCache.pop(0)								# Remove and get the first message in the cache
+#
+#                 timestamp = time.strftime('%m-%d %H:%M', time.localtime(int(msg_obj.messageTime)))	# Convert epoch time to readable format
+#                 new_message = f"[{timestamp}] {msg_obj.fromAddr}: {msg_obj.msg}"
+#                 received_messages.append(new_message)								# Append message with timestamp
+#                 socketio.emit('new_message', {'message': new_message})	# Send to UI
+#
+#         time.sleep(0.5)  # Add delay to avoid high CPU usage
 def background_listener():
     global messenger
     while True:
-        if messenger and messenger.messageCache:								    # Check if messenger is initialized and has cached messages
-            while messenger.messageCache:									        # Process all messages in the cache
-                msg_obj = messenger.messageCache.pop(0)								# Remove and get the first message in the cache
+        if messenger and messenger.messageCache:                                    # Check if messenger is initialized and has cached messages
+            while messenger.messageCache:                                           # Process all messages in the cache
+                pkt = messenger.messageCache.pop(0)                                 # Remove and get the first message in the cache
 
-                timestamp = time.strftime('%m-%d %H:%M', time.localtime(int(msg_obj.messageTime)))	# Convert epoch time to readable format
-                new_message = f"[{timestamp}] {msg_obj.fromAddr}: {msg_obj.msg}"
-                received_messages.append(new_message)								# Append message with timestamp
-                socketio.emit('new_message', {'message': new_message})	# Send to UI
+                ts = time.strftime('%m-%d %H:%M',
+                                   time.localtime(int(pkt.messageTime)))
+                line = f"[{ts}] {pkt.fromAddr}: {pkt.msg}"
 
-        time.sleep(0.5)  # Add delay to avoid high CPU usage
+                # broadcast to all browsers – tell them *which* room
+                ui_emit('new_message', {'room': int(pkt.fromAddr),
+                                        'message': line})
+        time.sleep(0.5)
+
 
 # Helper function to list all available serial ports on the system
 def list_serial_ports():
@@ -56,29 +82,57 @@ def index():
     return render_template('index.html', messages=received_messages, comm_port=connected, ports=ports)
 
 # Listen for 'send_message' events from any connected client
+# @socketio.on('send_message')
+# def handle_send_message(data):
+#     global messenger
+#     message_text = data.get('message')                      # Extract the message content from the received data dictionary
+#
+#     if messenger and message_text:                          # Only proceed if a messenger is initialized and the message is not empty
+#         messenger.ChatMessage(message_text)                 # Send the message out over the LoRa network
+#
+#         now = time.strftime('%m-%d %H:%M', time.localtime(int(time.time())))  # Create a timestamp for when the server handled the message
+#
+#         new_message = f"[{now}] You: {message_text}"        # Format the new message to include timestamp and sender ("You")
+#
+#         received_messages.append(new_message)               # Save the message to the server's local history
+#
+#         # Broadcast the new message to all connected web clients immediately
+#         emit('new_message', {'message': new_message}, broadcast=True)
 @socketio.on('send_message')
 def handle_send_message(data):
     global messenger
-    message_text = data.get('message')                      # Extract the message content from the received data dictionary
 
-    if messenger and message_text:                          # Only proceed if a messenger is initialized and the message is not empty
-        messenger.ChatMessage(message_text)                 # Send the message out over the LoRa network
+    dest_addr = int(data.get('room', 0))     # 0 = broadcast
+    msg_text  = data.get('message', '').strip()
 
-        now = time.strftime('%m-%d %H:%M', time.localtime(int(time.time())))  # Create a timestamp for when the server handled the message
+    print(f"[Flask] →  dest={dest_addr}  {msg_text}")  # DEBUG LINE
 
-        new_message = f"[{now}] You: {message_text}"        # Format the new message to include timestamp and sender ("You")
+    if messenger and msg_text:
+        # LoRa side
+        messenger.ChatMessage(msg_text, dest_addr)
 
-        received_messages.append(new_message)               # Save the message to the server's local history
+        # echo back to every browser so they see their own line
+        ts = time.strftime('%m-%d %H:%M', time.localtime())
+        emit('new_message',
+             {'room': dest_addr,
+              'message': f"[{ts}] You: {msg_text}"},
+             broadcast=True)
 
-        # Broadcast the new message to all connected web clients immediately
-        emit('new_message', {'message': new_message}, broadcast=True)
+@socketio.on('get_hosts')
+def send_known_hosts():
+    if messenger:
+        emit('host_list', messenger.hostTracker.knownHosts)
+    else:
+        emit('host_list', [])
+
 
 # For sending Training status
 @socketio.on('connect')
 def handle_connect():
-    global messenger
     if messenger and messenger.tr and messenger.tr.training_in_progress:
-        emit('system_message', {'message': '🔄 Establishing connection... Training started (30s)'})
+        emit('system_message',
+             {'message': '🔄 Establishing connection… Training started (30 s)'})
+
 
 
 if __name__ == '__main__':

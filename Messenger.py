@@ -125,14 +125,15 @@ class Messenger:
             print("[Messenger] FLAG: " + Message.flag)
             print("[Messenger] SEQ: " + Message.seqNum)
 
-    def ChatMessage(self, msg):
+    def ChatMessage(self, msg: str, dest: int = 0):
+
         if self.clearToSend and self.clearToSendIssueTime:
             if time.time() < self.clearToSendIssueTime:
                 print("[Messenger]: CTS active. Message not sent.")
                 return
         #MsgPacket = Message.Message()
         #MsgPacket.newMessage(msg)
-        DM = DirectMessage.DirectMessage(msg)
+        DM = DirectMessage.DirectMessage(msg, dest)
         DM.send(self)
 
         # Creates a message packet, then sends it. The message will generate the correct data for sending the command.

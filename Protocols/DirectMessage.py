@@ -38,6 +38,8 @@ class DirectMessage:
         Messenger.clearToSend = True
         Messenger.clearToSendIssueTime = time.time() + 30
         Messenger.lastMessageSent = self  #Last message sent
+        # diagnostic:
+        print("[DM → RYLR] " + self.pkt.data)
         Messenger.comm.send(self.pkt.data)  # The message packet itself
         print("[DM] FLAG: " + self.pkt.flag)
         self.sendAttempts += 1
@@ -76,10 +78,10 @@ class DirectMessage:
 
     def composePacket(self):
         RequestPacket = Message.Message()
-        RequestPacket.newMessage(self.msg)
+        RequestPacket.newMessage(self.msg, self.dest)
         # RequestPacket = Message.Message()
         RequestPacket.flag = RequestPacket.binary_to_ascii("0000000000010000")
-        RequestPacket.toAddr = self.dest
+        # RequestPacket.toAddr = self.dest
         # RequestPacket.seqNum = RequestPacket.binary_to_ascii("0" + format(random.getrandbits(7), '07b'))
         # RequestPacket.messageTime = int(time.time())
         # RequestPacket.msg = self.msg

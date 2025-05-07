@@ -96,14 +96,7 @@ class Message:
         self.broadCast = False  # If enabled, message is broadcast.
         self.messageTime = None  # The time in which the message was created/sent/received.
         self.encryption = None  # Not sure on this yet.
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
         self.hop_limit = DEFAULT_HOP_LIMIT  # hop_limit attribute
->>>>>>> Stashed changes
-=======
-        self.hop_limit = DEFAULT_HOP_LIMIT  # hop_limit attribute
->>>>>>> Stashed changes
 
         self.dataLength = 0  # This is used by Rylr to specify the size of the message
         self.data = None  # This is the full command string. This will get generated at newMessage or recievedMessage
@@ -111,10 +104,7 @@ class Message:
         # Received message only
         self.SNR = 0
         self.DBM = 0
-<<<<<<< Updated upstream
-=======
         self.received_from_addr = None  # Track the immediate sender
->>>>>>> Stashed changes
 
     # Whenever you need to make a new message, as in a chat message.
     # You use this function
@@ -137,13 +127,11 @@ class Message:
         try:
             encrypted_data = cipher.encrypt(messageData.encode())
             self.msg = encrypted_data.decode()
-<<<<<<< Updated upstream
-=======
 
             mac = hmac.new(SHARED_HMAC, self.msg.encode(), hashlib.sha256).hexdigest()
             self.msg = f"{self.msg}|HMAC:{mac}"
 
->>>>>>> Stashed changes
+
             self.encryption = True
         except Exception as e:
             print(f"[Encryption] Error encrypting message: {e}")
@@ -240,10 +228,8 @@ class Message:
 
                 decrypted = cipher.decrypt(msg_parts[0].encode())
                 self.msg = decrypted.decode()
-<<<<<<< Updated upstream
+
                 self.encryption = True
-=======
-                # self.encryption = True
 
                 if len(msg_parts) == 2:
                     print("MSG: " + msg_parts[0])
@@ -264,7 +250,6 @@ class Message:
                 #
                 #
                 # self.msg = decrypted
->>>>>>> Stashed changes
 
             except Exception as e:
                 print(f"[Decryption] Failed to decrypt {e}")

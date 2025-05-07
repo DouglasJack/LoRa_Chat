@@ -57,12 +57,10 @@ class DirectMessage:
             if Message.ascii_to_binary(Message.flag)[7] == "1":
                 print("[DM] Packet ack complete, ending.")
                 # ACK and SeqNUM are toggled up. So we can
-<<<<<<< Updated upstream
                 self.success = True
                 self.responseThread.stop()
                 self.Messenger.clearToSend = False
                 self.Messenger.clearToSendIssueTime = time.time()
-=======
 
                 print("[DM] (DEBUG) IGNORING ENDING FOR RELAY!")
                 # self.success = True
@@ -70,7 +68,6 @@ class DirectMessage:
                 # self.Messenger.clearToSendIssueTime = time.time()
                 # self.responseThread.stop()
 
->>>>>>> Stashed changes
 
     def composePacket(self):
         RequestPacket = Message.Message()

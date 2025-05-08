@@ -87,4 +87,6 @@ class DirectMessage:
         # RequestPacket.msg = self.msg
         # RequestPacket.dataLength = len(RequestPacket.msg) + 5 + 10
         # RequestPacket.data = Message.messageToCommand(RequestPacket)
+        RequestPacket.broadCast = (self.dest == 0)  # optional, for local logic
+        RequestPacket.data = RequestPacket.messageToCommand(RequestPacket)  # ⚡ rebuild
         self.pkt = RequestPacket

@@ -72,8 +72,15 @@ class DirectMessage:
     def composePacket(self):
         RequestPacket = Message.Message()
         RequestPacket.newMessage(self.msg, self.dest)
+
         # RequestPacket = Message.Message()
-        RequestPacket.flag = RequestPacket.binary_to_ascii("0000000000010000")
+        if self.dest == 0:  # broadcast
+            # bit‑11 = 0  → no CTS/ACK (otherwise every receiver would answer)
+            RequestPacket.flag = RequestPacket.binary_to_ascii("0000000000000000")
+        else:  # direct DM
+            # bit‑11 = 1  → expect ACK
+            RequestPacket.flag = RequestPacket.binary_to_ascii("0000000000010000")
+
         # RequestPacket.toAddr = self.dest
         # RequestPacket.seqNum = RequestPacket.binary_to_ascii("0" + format(random.getrandbits(7), '07b'))
         # RequestPacket.messageTime = int(time.time())

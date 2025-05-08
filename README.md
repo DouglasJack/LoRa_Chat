@@ -36,7 +36,7 @@ or direct (private chat) modes via a clean web-based UI.
 - USB-to-Serial connection to host device
 - Multiple nodes for testing P2P and broadcast
 ### Software Requirements
-- Python 3.10+
+- Python 3.12+
 - Pip packages: see requirements.txt
 
 ## Getting Started

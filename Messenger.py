@@ -92,7 +92,7 @@ class Messenger:
             MsgPacket = Message.Message()
 
             MsgPacket = MsgPacket.recievedMessage(msg)
-            print("[Messenger] Got packet!"+MsgPacket.fromAddr)
+            print(f"[Messenger] Got packet! {MsgPacket.fromAddr}")
 
 
             print(MsgPacket.ascii_to_binary(MsgPacket.flag))

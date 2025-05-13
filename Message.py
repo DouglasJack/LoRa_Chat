@@ -182,7 +182,8 @@ class Message:
         parts = message.split(',')
 
         # Base structure
-        addr = parts[0]  # Could be empty
+        #addr = parts[0]  # Could be empty
+        addr = int(parts[0])  # sender’s node‑ID as int
         length = parts[1]
         payload = parts[2]
         signal = parts[3]
@@ -214,7 +215,8 @@ class Message:
 
         if result and len(result) == 8:
             # chunks = match.groups()  # ('5', '6', '\x10', '<Cool message>', '!', '-13', '11')
-            self.fromAddr = result["address"]
+            #self.fromAddr = result["address"]
+            self.fromAddr = addr
             self.dataLength = result["length"]
             self.flag = result["flag"]
             self.msg = result["message"]
@@ -226,8 +228,15 @@ class Message:
             self.DBM = result["signal"]
             self.SNR = result["snr"]
 
-            if self.fromAddr == 0:
-                self.broadCast = True
+            # if self.fromAddr == 0:
+            #     self.broadCast = True
+            # ACK/CTS bit (bit‑11)==0 ⇒ broadcast\n
+            try:
+                flag_bits = self.ascii_to_binary(self.flag)  # 16‑bit string
+                # bit‑11 clear (index 11) → broadcast
+                self.broadCast = (flag_bits[11] == "0")
+            except Exception:
+                self.broadCast = False
 
             try:
                 # Split the message and HMAC in MSG packet.

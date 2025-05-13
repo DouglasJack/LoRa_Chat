@@ -85,7 +85,7 @@ class Training:
         RequestPacket.messageTime = int(time.time())
         RequestPacket.msg = addressesString
         RequestPacket.data = RequestPacket.messageToCommand(RequestPacket)
-        print("[Trainer] sending to: "+RequestPacket.toAddr)
+        print(f"[Trainer] sending to: {RequestPacket.toAddr}")
         print("[Trainer] ADDRESSES: " + RequestPacket.msg)
 
         self.messenger.CustomMessage(RequestPacket, True)  # True can be used to force reply.
@@ -95,7 +95,7 @@ class Training:
         # Requesting the addresses and the sequence number is correct, then this is a response
         # Otherwise, this is a cry for help.
         if pkt.seqNum == self.searchingSeqNum:
-            print("[Trainer] Addresses received from: " + pkt.fromAddr)
+            print(f"[Trainer] Addresses received from: {pkt.fromAddr}")
             #TODO: Set it up so it only adds addresses that aren't known.
             # self.addressMessages.append(int(pkt.fromAddr))
 
@@ -112,7 +112,7 @@ class Training:
                 print(f"{char1}{char2}")
                 value = pkt.asciiToInteger(f"{char1}{char2}")
 
-                print("[Trainer] new address: "+f"{char1}{char2}"+"->"+str(value))
+                print(f"[Trainer] new address: {char1}{char2}->{value}")
                 # print("[Trainer] new address: " + str(binary1 + binary2))
                 # self.addressMessages.append(int(binary1 + binary2, 2))
                 self.messenger.hostTracker.addHost(value)
@@ -129,7 +129,7 @@ class Training:
                     print("[Trainer] You are in training mode. TODO: DO NOT REPLY IN TRAINING MODE.")
 
                 offset = random.random() * 15  # offset of 15, gives us lots of padding and fits within 30s window.
-                print("[Trainer] Replying to init of other device offset-> " + str(offset))
+                print(f"[Trainer] Replying to init of other device offset→ {offset}")
                 pt = threading.Thread(target=self.threadedReply, args=(pkt, offset))
                 pt.start()  # This is threaded because of the offset.
                 # If 3 isn't toggled up, 3 = CTS

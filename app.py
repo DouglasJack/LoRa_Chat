@@ -49,9 +49,8 @@ def background_listener():
                                    time.localtime(int(pkt.messageTime)))
                 line = f"[{ts}] {pkt.fromAddr}: {pkt.msg}"
 
-                # broadcast to all browsers – tell them *which* room
-                ui_emit('new_message', {'room': int(pkt.fromAddr),
-                                        'message': line})
+                room_id = 0 if getattr(pkt, "broadCast", False) else int(pkt.fromAddr)
+                ui_emit('new_message', {'room': room_id, 'message': line})
         time.sleep(0.5)
 
 
